@@ -10,4 +10,24 @@ public class WebRouting {
     public String home(Model model) {
         return "landingPage";
     }
+
+    @GetMapping("/editDesign")
+    public String editDesign(Model model) {
+        return "editDesign";
+    }
+
+    @GetMapping("/login")
+    public String login(Model model) {
+        return "login";
+    }
+
+    @GetMapping("register")
+    public String register(Model model) {
+        return "register";
+    }
+
+    @GetMapping("design")
+    public String design(Model model) {
+        return "design";
+    }
 }

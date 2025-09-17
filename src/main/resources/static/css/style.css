@@ -1,0 +1,163 @@
+/* Reset cơ bản */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #fcf8f3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container */
+.container {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Form Card */
+.form-card {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Logo */
+.logo img {
+    width: 200px;     /* điều chỉnh kích thước logo */
+    height: auto;     /* giữ tỉ lệ */
+    margin-bottom: 30px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;  /* căn giữa */
+}
+
+
+/* Headings and paragraphs */
+h2 {
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+/* Input Group */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 40px 12px 38px; /* padding-left cho icon trái, padding-right cho icon phải */
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+.input-group input:focus {
+    border-color: #b59550;
+}
+
+/* Icon trái */
+.input-group i.fa-envelope,
+.input-group i.fa-user,
+.input-group i.fa-lock:first-of-type {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+/* Icon toggle password */
+.input-group .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #b59550;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 15px;
+}
+
+button:hover {
+    background-color: rgba(168, 142, 79, 1);
+}
+
+/* Terms text */
+.terms {
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: 40px;
+    text-align: center;
+}
+
+.terms a {
+    color: #b59550;
+    text-decoration: none;
+}
+
+.terms a:hover {
+    text-decoration: underline;
+}
+.title{
+    font-size: 15px;
+    text-align: left;
+}
+.form-links {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.form-links .forgot-password {
+    margin-bottom: 8px;
+    cursor: pointer;
+    color: #b59550;
+    transition: 0.3s;
+}
+
+.form-links .forgot-password:hover {
+    text-decoration: underline;
+}
+
+.form-links .signup a {
+    color: #b59550;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.form-links .signup a:hover {
+    text-decoration: underline;
+}
+.signup{
+    padding-top: 40px;
+}

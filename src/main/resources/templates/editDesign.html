@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Wedding Invitation Designer - Demo</title>
+
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="/css/editDesign.css">
+
+    <!-- Font Awesome icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+</head>
+<body>
+<!-- Header -->
+<header class="header">
+    <div class="left-controls">
+        <button class="btn">Save Design</button>
+        <button class="btn">Preview</button>
+    </div>
+
+    <div class="title">Wedding Invitation Designer</div>
+
+    <div class="right-controls">
+        <button class="btn primary">Download</button>
+    </div>
+</header>
+
+<!-- Main layout -->
+<div class="main">
+    <!-- Sidebar -->
+    <aside class="sidebar fade-in">
+        <h2>Wedding Designer</h2>
+        <div class="subtitle">Create your perfect invitation</div>
+
+        <div class="toolbar">
+            <div class="tool-item">
+                <i class="fas fa-font"></i>
+                <span>Text</span>
+            </div>
+            <div class="tool-item">
+                <i class="fas fa-image"></i>
+                <span>Background</span>
+            </div>
+            <div class="tool-item">
+                <i class="fas fa-photo-film"></i>
+                <span>Images</span>
+            </div>
+            <div class="tool-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </div>
+        </div>
+
+        <button class="add-btn" id="addTextBtn">+ Add Text Element</button>
+        <div class="quality">Text Elements</div>
+        <div class="elements" id="elementsList">
+            <div class="element">
+                <div class="name">Save the Date</div>
+                <div class="fas fa-trash-alt"></div>
+            </div>
+            <div class="element">
+                <div class="name">John & Jane</div>
+                <div class="fas fa-trash-alt"></div>
+            </div>
+            <div class="element">
+                <div class="name">June 15, 2024</div>
+                <div class="fas fa-trash-alt"></div>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- Canvas -->
+    <main class="canvas-wrap">
+        <div class="canvas fade-in" role="region" aria-label="Design canvas">
+            <!-- Card preview -->
+            <div class="card" id="card">
+                <h3>Save the Date</h3>
+                <h1>A &amp; B</h1>
+                <p>June 30, 2025</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Link JS -->
+<script src="/js/editDesign.js"></script>
+</body>
+</html>

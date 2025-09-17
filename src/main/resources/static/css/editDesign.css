@@ -1,0 +1,219 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { height: 100%; }
+body{
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    background-color: #fbf6f2; /* nền tổng */
+    color: #3b352b;
+}
+
+/* Header */
+.header {
+    height: 56px;
+    background: linear-gradient(180deg, #d7c6ae, #cdbb9b);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 0 rgba(255,255,255,0.2) inset;
+    position: relative;
+}
+.left-controls, .right-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    color: #3b2f21;
+}
+.btn {
+    background: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1px solid rgba(0,0,0,0.06);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+.btn.primary {
+    background: #6b5136;
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 10px rgba(107,81,54,0.25);
+}
+
+/* Main */
+.main {
+    display:flex;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    background: linear-gradient(180deg, #e9ddc8, #e0d3bc);
+    padding: 22px;
+    border-right: 1px solid rgba(0,0,0,0.04);
+    overflow-y: auto;
+    width: 300px;
+    overflow-x: hidden;
+}
+.sidebar h2 {
+    font-size:18px;
+    margin-bottom:6px;
+    color: rgba(168, 142, 79, 1);
+}
+.sidebar .subtitle {
+    font-size:12px;
+    opacity:0.85;
+    margin-bottom:14px;
+}
+.toolbar {
+    width: 300px;
+    display: flex;
+    background: #e6d7bb;
+    gap: 0px;
+}
+.sidebar .toolbar {
+    width: calc(100% + 44px);
+    margin-left: -22px;
+}
+.tool-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.tool-item:hover {
+    background: #e2d3bf;
+}
+.tool-item i {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #5a4b32;
+}
+.tool-item span {
+    font-size: 13px;
+    color: #4d3f2c;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.add-btn {
+    display:block;
+    margin: 12px 0 18px 0;
+    background:rgba(168, 142, 79, 1);
+    color:#fff;
+    padding:10px;
+    border-radius:10px;
+    text-align:center;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    border:none;
+    width: 100%;
+    height: 40px;
+}
+.quality {
+    padding: 15px 3px;
+}
+.elements {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    cursor: pointer;
+}
+.element {
+    background: linear-gradient(180deg, #e9ddc8, #e0d3bc);
+    padding:10px;
+    border-radius:8px;
+    font-size:13px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border:2px solid white;
+}
+.element .name { color:#3b352b; }
+.element .actions { opacity:0.7; font-size:12px; }
+
+/* Canvas */
+.canvas-wrap {
+    flex: 1;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding: 40px;
+    overflow:auto;
+    position:relative;
+}
+.canvas {
+    width:900px;
+    height:500px;
+    position:relative;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow: auto;
+    margin-top: 60px;
+}
+.card {
+    width:300px;
+    height: 300px;
+    background-color: #e2d0b8;
+    padding:36px 28px;
+    border-radius:12px;
+    text-align:center;
+    box-shadow: 0 22px 30px rgba(0,0,0,0.12), 0 6px 8px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+}
+.card h3 { font-size:18px; margin-bottom:30px; color:#675440; font-weight:600; }
+.card h1 { font-size:36px; margin-bottom:50px; color:#4c3e31; letter-spacing:2px; }
+.card p { font-size:14px; color:#4a3f36; opacity:0.95 }
+
+/* Responsive */
+@media (max-width:980px){
+    .sidebar { display:none; }
+    .canvas { width:calc(100% - 40px); height: calc(100vh - 120px); }
+}
+
+/* Hiệu ứng */
+.fade-in {
+    animation: fadeIn 550ms ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity:1; transform: translateY(0); }
+}
+.draggable-text {
+    position: absolute;
+    font-size: 16px;
+    color: #3b2f21;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+}
+.element input.name {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: #3b352b;
+}
+.element input.name:focus {
+    outline: none;
+    border-bottom: 1px solid #6b5136;
+}
+
+
