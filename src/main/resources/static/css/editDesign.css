@@ -159,17 +159,17 @@ body{
 }
 .canvas {
     width:900px;
-    height:500px;
+    height:auto;
     position:relative;
-    display:flex;
-    justify-content:center;
     align-items:center;
     overflow: auto;
     margin-top: 60px;
+    display: flex;
+    flex-direction: column;
 }
 .card {
-    width:300px;
-    height: 300px;
+    width:400px;
+    height: 400px;
     background-color: #e2d0b8;
     padding:36px 28px;
     border-radius:12px;

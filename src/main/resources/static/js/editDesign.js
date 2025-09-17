@@ -174,4 +174,55 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+    const addPageBtn = document.getElementById("addPagebtn");
+    const pagesList = document.getElementById("pagesList");
+    // Sửa: Lấy đúng div.canvas để thêm card mới vào trong đó
+    const canvas = document.querySelector(".canvas");
+    let pageCounter = 1;
+
+    // Hàm tạo card mới trong canvas
+    function createPageElement(name, id) {
+        const newCard = document.createElement("div");
+        newCard.className = "card";
+        newCard.dataset.id = id;
+        newCard.innerHTML = `<h3>${name}</h3>`;
+
+        // Thêm card mới vào cuối của div.canvas
+        canvas.appendChild(newCard);
+    }
+
+    // Khi bấm nút "+ Add Page Element"
+    addPageBtn.addEventListener("click", () => {
+        pageCounter++;
+        const defaultName = `Page ${pageCounter}`;
+        const id = Date.now();
+
+        // 1. Thêm vào danh sách sidebar
+        const pageListItem = document.createElement("div");
+        pageListItem.className = "page";
+        pageListItem.innerHTML = `
+            <div class="name">${defaultName}</div>
+            <div class="fas fa-trash-alt"></div>
+        `;
+        pagesList.appendChild(pageListItem);
+
+        // 2. Thêm card mới vào canvas
+        createPageElement(defaultName, id);
+
+        // 3. Logic xóa
+        const trashBtn = pageListItem.querySelector(".fa-trash-alt");
+        trashBtn.addEventListener("click", () => {
+            // Xóa khỏi sidebar
+            pageListItem.remove();
+
+            // Tìm và xóa card tương ứng trong canvas
+            const cardToRemove = canvas.querySelector(`.card[data-id="${id}"]`);
+            if (cardToRemove) {
+                cardToRemove.remove();
+            }
+
+            // Sửa: Trừ biến đếm đi 1 sau khi xóa thành công
+            pageCounter--;
+        });
+    });
 });
