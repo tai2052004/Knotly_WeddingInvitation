@@ -30,4 +30,9 @@ public class WebRouting {
     public String design(Model model) {
         return "design";
     }
+
+    @GetMapping("confirmWeeding")
+    public String confirmWeeding(Model model) {
+        return "confirmWeeding";
+    }
 }

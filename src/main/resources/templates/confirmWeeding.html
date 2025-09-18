@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding RSVP</title>
+    <link rel="stylesheet" href="/css/confirmWeeding.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<header class="header">
+    <img src="image/knotlyIcon.png" alt="Knotly Logo">
+</header>
+
+<main class="container">
+    <!-- Upload image -->
+    <div class="upload-box">
+        <h3>Event Photo</h3>
+        <div class="upload-area" id="upload-area">
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <span class="upload-icon">⬆</span>
+            <p id="upload-text">Upload an image</p>
+            <small>Drag and drop or click to select</small>
+        </div>
+    </div>
+
+    <!-- RSVP Form -->
+    <div class="form-box">
+        <h2>Wedding</h2>
+        <form>
+            <div class="form-group">
+                <label>Will you be attending?</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="attending"> Yes</label>
+                    <label><input type="radio" name="attending"> No</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name <span class="required">*</span></label>
+                <input type="text" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email Address <span class="required">*</span></label>
+                <input type="email" placeholder="Enter your email address" required>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" placeholder="Enter your phone number">
+            </div>
+
+            <div class="form-group">
+                <label>Who are you a guest of?</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="guest"> Bride</label>
+                    <label><input type="radio" name="guest"> Groom</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Number of Guests</label>
+                <input type="text" placeholder="How many guests will attend?">
+            </div>
+
+            <div class="form-group">
+                <label>Special Message or Wishes</label>
+                <textarea placeholder="Share your wishes for the happy couple..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-submit fa-regular fa-paper-plane">Submit RSVP</button>
+        </form>
+    </div>
+</main>
+<script src="/js/confirmWeeding.js"></script>
+</body>
+</html>
