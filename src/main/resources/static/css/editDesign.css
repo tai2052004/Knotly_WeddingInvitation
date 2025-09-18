@@ -78,7 +78,7 @@ body{
     width: 300px;
     display: flex;
     background: #e6d7bb;
-    gap: 0px;
+    gap: 0;
 }
 .sidebar .toolbar {
     width: calc(100% + 44px);
