@@ -110,7 +110,7 @@ body{
     white-space: nowrap;
 }
 
-.add-btn {
+.add-btn, .add-div {
     display:block;
     margin: 12px 0 18px 0;
     background:rgba(168, 142, 79, 1);
@@ -128,13 +128,13 @@ body{
 .quality {
     padding: 15px 3px;
 }
-.elements {
+.elements, .pages {
     display:flex;
     flex-direction:column;
     gap:10px;
     cursor: pointer;
 }
-.element {
+.element, .page {
     background: linear-gradient(180deg, #e9ddc8, #e0d3bc);
     padding:10px;
     border-radius:8px;
@@ -144,8 +144,8 @@ body{
     align-items:center;
     border:2px solid white;
 }
-.element .name { color:#3b352b; }
-.element .actions { opacity:0.7; font-size:12px; }
+.element .name, .page .name { color:#3b352b; }
+.element .actions, .page .actions { opacity:0.7; font-size:12px; }
 
 /* Canvas */
 .canvas-wrap {
