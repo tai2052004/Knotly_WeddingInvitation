@@ -158,7 +158,7 @@ body{
     position:relative;
 }
 .canvas {
-    width:900px;
+    width: auto;
     height:auto;
     position:relative;
     align-items:center;
@@ -166,6 +166,9 @@ body{
     margin-top: 60px;
     display: flex;
     flex-direction: column;
+}
+.selected-text {
+    outline: 2px dashed #4caf50;
 }
 .card {
     width:400px;
@@ -178,16 +181,19 @@ body{
     position: relative;
     overflow: hidden;
 }
-.card h3 { font-size:18px; margin-bottom:30px; color:#675440; font-weight:600; }
-.card h1 { font-size:36px; margin-bottom:50px; color:#4c3e31; letter-spacing:2px; }
-.card p { font-size:14px; color:#4a3f36; opacity:0.95 }
+.card h3 { font-size:18px; margin-bottom:30px; color:#675440; font-weight:600; z-index: 1000}
+.card h1 { font-size:36px; margin-bottom:50px; color:#4c3e31; letter-spacing:2px; z-index: 1000}
+.card p { font-size:14px; color:#4a3f36; opacity:0.95; z-index: 1000}
 
 /* Responsive */
 @media (max-width:980px){
     .sidebar { display:none; }
     .canvas { width:calc(100% - 40px); height: calc(100vh - 120px); }
 }
-
+.text-element {
+    position: absolute;
+    z-index: 1000; /* luôn nổi trên card */
+}
 /* Hiệu ứng */
 .fade-in {
     animation: fadeIn 550ms ease;
