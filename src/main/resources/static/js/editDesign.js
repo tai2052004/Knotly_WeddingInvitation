@@ -2,105 +2,316 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Lấy các phần tử DOM chính ---
     const addTextBtn = document.querySelector(".add-btn");
     const addPageBtn = document.getElementById("addPagebtn");
-
     const elementsList = document.querySelector(".elements");
     const pagesList = document.getElementById("pagesList");
-
     const canvas = document.querySelector(".canvas");
     const card = document.getElementById("card");
 
-    let pageCounter = 1;
-    let selectedText = null;
+    // --- DOM cho quản lý sidebar và ảnh ---
+    const textSidebar = document.querySelector(".text-sidebar");
+    const imageSidebar = document.querySelector(".image-sidebar");
+    const textBtn = document.querySelector(".text-btn");
+    const imagesBtn = document.querySelector(".images-btn");
+    const uploadImageInput = document.getElementById("uploadImageInput");
+    const imageList = document.getElementById("imageList");
 
-    // =================================================================
-    // --- PHẦN 1: HÀM KÉO THẢ (DRAG & DROP) ---
-    // =================================================================
+    let pageCounter = 1;
+    let selectedElement = null;
+    let activePageId = null;
+
+    // --- toolbar: tìm hoặc tạo nếu chưa tồn tại ---
+    let toolbar = document.getElementById("floatingToolbar");
+    if (!toolbar) {
+        toolbar = document.createElement("div");
+        toolbar.id = "floatingToolbar";
+        toolbar.className = "floating-toolbar";
+        toolbar.style.position = "absolute";
+        toolbar.style.display = "none";
+        toolbar.style.background = "white";
+        toolbar.style.border = "1px solid #ccc";
+        toolbar.style.borderRadius = "6px";
+        toolbar.style.boxShadow = "0 2px 6px rgba(0,0,0,0.12)";
+        toolbar.style.padding = "6px";
+        toolbar.style.gap = "6px";
+        toolbar.style.zIndex = "3000";
+        toolbar.innerHTML = `
+            <select id="tb-fontFamily" title="Font">
+                <option value="">(font)</option>
+                <option value="Muli, Arial, sans-serif">Muli</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="Times New Roman, Times, serif">Times</option>
+                <option value="Georgia, serif">Georgia</option>
+            </select>
+            <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
+            <input id="tb-color" type="color" title="Color" />
+            <button id="tb-bold" title="Bold"><b>B</b></button>
+            <button id="tb-italic" title="Italic"><i>I</i></button>
+            <button id="tb-underline" title="Underline"><u>U</u></button>
+        `;
+        document.body.appendChild(toolbar);
+    }
+
+    const tbFont = toolbar.querySelector("#tb-fontFamily");
+    const tbSize = toolbar.querySelector("#tb-fontSize");
+    const tbColor = toolbar.querySelector("#tb-color");
+    const tbBold = toolbar.querySelector("#tb-bold");
+    const tbItalic = toolbar.querySelector("#tb-italic");
+    const tbUnderline = toolbar.querySelector("#tb-underline");
+
+    function rgbToHex(rgb) {
+        if (!rgb) return "#000000";
+        const m = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (!m) return rgb;
+        return "#" + [1, 2, 3].map(i => parseInt(m[i]).toString(16).padStart(2, "0")).join("");
+    }
+
+    function updateToolbarUI(el) {
+        if (!el || !el.classList.contains("draggable-text")) return;
+        const cs = window.getComputedStyle(el);
+        const fontFamily = cs.fontFamily || "";
+        const fontSize = parseInt(cs.fontSize) || 16;
+        const color = cs.color || "#000";
+        const fontWeight = cs.fontWeight;
+        const fontStyle = cs.fontStyle;
+        const textDecoration = cs.textDecorationLine || cs.textDecoration || "";
+        tbFont.value = fontFamily;
+        tbSize.value = fontSize;
+        tbColor.value = rgbToHex(color);
+        tbBold.dataset.active = (fontWeight === "700" || fontWeight === "bold") ? "1" : "0";
+        tbItalic.dataset.active = (fontStyle === "italic") ? "1" : "0";
+        tbUnderline.dataset.active = (textDecoration.indexOf("underline") !== -1) ? "1" : "0";
+        tbBold.style.background = tbBold.dataset.active === "1" ? "#eee" : "transparent";
+        tbItalic.style.background = tbItalic.dataset.active === "1" ? "#eee" : "transparent";
+        tbUnderline.style.background = tbUnderline.dataset.active === "1" ? "#eee" : "transparent";
+    }
+
+    function updateToolbarPosition(el) {
+        if (!el || !el.classList.contains("draggable-text")) return;
+        const rect = el.getBoundingClientRect();
+        const tbRect = toolbar.getBoundingClientRect();
+        const top = rect.top + window.scrollY - tbRect.height - 8;
+        const left = rect.left + window.scrollX;
+        toolbar.style.top = `${Math.max(6, top)}px`;
+        toolbar.style.left = `${Math.max(6, left)}px`;
+    }
+
+    function selectElement(el) {
+        if (selectedElement) {
+            selectedElement.classList.remove("selected-element-outline");
+            selectedElement.classList.remove("selected-image-outline");
+            // Ẩn tay cầm kéo dãn của phần tử đã chọn trước đó
+            const oldHandle = selectedElement.querySelector(".resize-handle");
+            if (oldHandle) oldHandle.style.display = "none";
+        }
+        selectedElement = el;
+        if (selectedElement) {
+            // Hiển thị tay cầm kéo dãn của phần tử mới được chọn
+            const currentHandle = selectedElement.querySelector(".resize-handle");
+            if (currentHandle) currentHandle.style.display = "block";
+
+            if (selectedElement.classList.contains("draggable-text")) {
+                selectedElement.classList.add("selected-element-outline");
+                toolbar.style.display = "flex";
+                updateToolbarUI(selectedElement);
+                updateToolbarPosition(selectedElement);
+            } else if (selectedElement.classList.contains("draggable-image")) {
+                selectedElement.classList.add("selected-image-outline");
+                toolbar.style.display = "none";
+            }
+        }
+    }
+
+    function hideToolbar() {
+        if (selectedElement) {
+            selectedElement.classList.remove("selected-element-outline");
+            selectedElement.classList.remove("selected-image-outline");
+            // Ẩn tay cầm kéo dãn khi không có phần tử nào được chọn
+            const handle = selectedElement.querySelector(".resize-handle");
+            if (handle) handle.style.display = "none";
+        }
+        toolbar.style.display = "none";
+        selectedElement = null;
+    }
+
+    tbFont.addEventListener("change", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.fontFamily = e.target.value || ""; });
+    tbSize.addEventListener("input", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.fontSize = e.target.value + "px"; });
+    tbColor.addEventListener("input", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.color = e.target.value; });
+    tbBold.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).fontWeight; selectedElement.style.fontWeight = (cur === "700" || cur === "bold") ? "normal" : "bold"; updateToolbarUI(selectedElement); });
+    tbItalic.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).fontStyle; selectedElement.style.fontStyle = (cur === "italic") ? "normal" : "italic"; updateToolbarUI(selectedElement); });
+    tbUnderline.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).textDecorationLine || ""; selectedElement.style.textDecoration = (cur.indexOf("underline") !== -1) ? "none" : "underline"; updateToolbarUI(selectedElement); });
+
+    let resizingEl = null; let resizeStartX = 0; let resizeStartY = 0; let resizeStartW = 0; let resizeStartH = 0;
+    document.addEventListener("mousemove", (e) => {
+        if (resizingEl) {
+            const dx = e.clientX - resizeStartX;
+            const dy = e.clientY - resizeStartY;
+            const newW = Math.max(20, resizeStartW + dx);
+            const newH = Math.max(20, resizeStartH + dy);
+            resizingEl.style.width = newW + "px";
+            resizingEl.style.height = newH + "px";
+            if (selectedElement === resizingEl && resizingEl.classList.contains('draggable-text')) updateToolbarPosition(resizingEl);
+        }
+    });
+    document.addEventListener("mouseup", () => { if (resizingEl) { resizingEl = null; document.body.style.userSelect = ""; } });
+
     function makeDraggable(el) {
         let offsetX, offsetY, isDown = false;
-
         el.addEventListener("mousedown", (e) => {
             if (e.button !== 0) return;
+            if (e.target.classList.contains("resize-handle")) return;
+            if (el.isContentEditable || el.contentEditable === "true") return;
             isDown = true;
             el.style.zIndex = 2000;
-            offsetX = e.clientX - el.getBoundingClientRect().left;
-            offsetY = e.clientY - el.getBoundingClientRect().top;
+            const rect = el.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
             e.preventDefault();
         });
-
         document.addEventListener("mousemove", (e) => {
             if (!isDown) return;
             const canvasRect = canvas.getBoundingClientRect();
             let x = e.clientX - canvasRect.left - offsetX;
             let y = e.clientY - canvasRect.top - offsetY;
-
             x = Math.max(0, Math.min(x, canvas.clientWidth - el.offsetWidth));
             y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
-
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
+            if (selectedElement === el && el.classList.contains('draggable-text')) updateToolbarPosition(el);
         });
-
         document.addEventListener("mouseup", () => {
+            if (isDown) {
+                const pages = canvas.querySelectorAll(".card");
+                pages.forEach((p) => {
+                    const rect = p.getBoundingClientRect();
+                    const elRect = el.getBoundingClientRect();
+                    if (elRect.left >= rect.left && elRect.right <= rect.right && elRect.top >= rect.top && elRect.bottom <= rect.bottom) {
+                        el.dataset.pageId = p.dataset.id;
+                    }
+                });
+            }
             isDown = false;
             el.style.zIndex = 1000;
         });
     }
 
-    // =================================================================
-    // --- PHẦN 2: SELECTION & DELETE KEY ---
-    // =================================================================
     function enableSelection(el) {
         el.addEventListener("click", (e) => {
             e.stopPropagation();
-            if (selectedText) {
-                selectedText.classList.remove("selected-text");
+            selectElement(el);
+        });
+
+        el.addEventListener("dblclick", (e) => {
+            e.stopPropagation();
+            if (el.classList.contains("draggable-text")) {
+                el.contentEditable = "true";
+                el.focus();
+                toolbar.style.display = "none";
             }
-            selectedText = el;
-            el.classList.add("selected-text");
+            selectElement(el);
         });
     }
 
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Delete" && selectedText) {
-            const id = selectedText.dataset.id;
-            selectedText.remove();
-            const sideItem = elementsList.querySelector(
-                `.element input[data-id="${id}"]`
-            );
-            if (sideItem) sideItem.parentElement.remove();
-            selectedText = null;
+        if (e.key === "Delete" && selectedElement) {
+            const id = selectedElement.dataset.id;
+            selectedElement.remove();
+            const sideTextItem = elementsList.querySelector(`.element input[data-id="${id}"]`);
+            if (sideTextItem) sideTextItem.parentElement.remove();
+            const sideImageItem = imageList.querySelector(`.image-item[data-id="${id}"]`);
+            if (sideImageItem) sideImageItem.remove();
+
+            hideToolbar();
         }
     });
 
-    // =================================================================
-    // --- PHẦN 3: CÁC HÀM TẠO & XÓA ---
-    // =================================================================
+    document.addEventListener("mousedown", (e) => {
+        const insideElement = !!e.target.closest(".draggable-text, .draggable-image");
+        const insideToolbar = !!e.target.closest("#floatingToolbar");
+        if (!insideElement && !insideToolbar) {
+            hideToolbar();
+        }
+    });
+
+    function createResizeHandleFor(el) {
+        if (!el.style.width) el.style.width = Math.max(100, el.offsetWidth) + "px";
+        if (!el.style.height) el.style.height = Math.max(50, el.offsetHeight) + "px";
+
+        let resizeHandle = el.querySelector(".resize-handle");
+        if (!resizeHandle) {
+            resizeHandle = document.createElement("div");
+            resizeHandle.className = "resize-handle";
+            el.appendChild(resizeHandle);
+        }
+
+        resizeHandle.style.position = "absolute";
+        resizeHandle.style.bottom = "0px";
+        resizeHandle.style.right = "0px";
+        resizeHandle.style.width = "16px";
+        resizeHandle.style.height = "16px";
+        resizeHandle.style.background = "linear-gradient(to top left, #fff 50%, #eee 50%)";
+        resizeHandle.style.border = "1px solid #666";
+        resizeHandle.style.borderTopLeftRadius = "3px";
+        resizeHandle.style.cursor = "nwse-resize";
+        resizeHandle.style.zIndex = "2001";
+        // ẨN TAY CẦM KÉO DÃN BAN ĐẦU
+        resizeHandle.style.display = "none";
+        resizeHandle.style.opacity = "0.8";
+        resizeHandle.style.clipPath = "polygon(0% 100%, 100% 100%, 100% 0%)";
+
+        resizeHandle.addEventListener("mousedown", (e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            resizingEl = el;
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            resizeStartW = el.offsetWidth;
+            resizeStartH = el.offsetHeight;
+            document.body.style.userSelect = "none";
+        });
+    }
+
+    function initCanvasElement(el, id, pageId, keepPosition = false) {
+        el.dataset.id = id;
+        el.dataset.pageId = pageId;
+        el.style.position = "absolute";
+        el.style.cursor = "move";
+        el.style.zIndex = "1000";
+        canvas.appendChild(el);
+
+        if (!keepPosition) {
+            const pageEl = canvas.querySelector(`.card[data-id="${pageId}"]`);
+            if (pageEl) {
+                const pageRect = pageEl.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                el.style.left = `${pageRect.left - canvasRect.left + 50}px`;
+                el.style.top = `${pageRect.top - canvasRect.top + 50}px`;
+            } else {
+                el.style.left = "50px";
+                el.style.top = "50px";
+            }
+        }
+        createResizeHandleFor(el);
+        makeDraggable(el);
+        enableSelection(el);
+    }
+
     function initTextElement(textEl, id, pageId, keepPosition = false) {
         textEl.classList.add("draggable-text");
         textEl.contentEditable = "false";
-        textEl.dataset.id = id;
-        textEl.dataset.pageId = pageId;
-        textEl.style.position = "absolute";
-        textEl.style.cursor = "move";
-        textEl.style.zIndex = "1000";
+        initCanvasElement(textEl, id, pageId, keepPosition);
 
-        if (!keepPosition) {
-            textEl.style.left = "50px";
-            textEl.style.top = "50px";
-        }
-
-        canvas.appendChild(textEl);
-        makeDraggable(textEl);
-        enableSelection(textEl);
-
-        textEl.addEventListener("dblclick", () => {
-            textEl.contentEditable = "true";
-            textEl.focus();
-        });
         textEl.addEventListener("blur", () => {
             textEl.contentEditable = "false";
             const input = elementsList.querySelector(`input[data-id="${id}"]`);
             if (input) input.value = textEl.innerText;
+            if (selectedElement === textEl) {
+                selectElement(textEl);
+            }
+        });
+        textEl.addEventListener("mousedown", (e) => {
+            if (textEl.isContentEditable || textEl.contentEditable === "true") {
+                e.stopPropagation();
+            }
         });
     }
 
@@ -111,21 +322,53 @@ document.addEventListener("DOMContentLoaded", () => {
         return textEl;
     }
 
+    function addImageElement(imageUrl, id, pageId, fileName = "Uploaded Image") {
+        const imgEl = document.createElement("div");
+        imgEl.className = "draggable-image";
+        imgEl.style.backgroundImage = `url(${imageUrl})`;
+        imgEl.style.backgroundSize = "contain";
+        imgEl.style.backgroundRepeat = "no-repeat";
+        imgEl.style.backgroundPosition = "center";
+        imgEl.style.width = "200px";
+        imgEl.style.height = "150px";
+        initCanvasElement(imgEl, id, pageId);
+        addImageToSidebar(fileName, imageUrl, id, pageId);
+        return imgEl;
+    }
+
     function addTextToSidebar(text, id, pageId) {
         const element = document.createElement("div");
         element.className = "element";
         element.innerHTML = `<input class="name" value="${text}" data-id="${id}" /><div class="fas fa-trash-alt"></div>`;
         element.dataset.pageId = pageId;
         elementsList.appendChild(element);
+        element.querySelector(".name").addEventListener("input", (e) => { const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`); if (textEl) textEl.innerText = e.target.value; });
+        element.querySelector(".fa-trash-alt").addEventListener("click", () => { element.remove(); const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`); if (textEl) textEl.remove(); if (selectedElement && selectedElement.dataset.id === id) hideToolbar(); });
+    }
 
-        element.querySelector(".name").addEventListener("input", (e) => {
-            const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
-            if (textEl) textEl.innerText = e.target.value;
+    function addImageToSidebar(fileName, imageUrl, id, pageId) {
+        const imageItem = document.createElement("div");
+        imageItem.className = "element image-item";
+        imageItem.dataset.id = id;
+        imageItem.dataset.pageId = pageId;
+        imageItem.innerHTML = `
+            <img src="${imageUrl}" alt="${fileName}" style="width: 50px; height: 50px; object-fit: contain; margin-right: 10px;">
+            <span class="name">${fileName}</span>
+            <div class="fas fa-trash-alt"></div>
+        `;
+        imageList.appendChild(imageItem);
+
+        imageItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+            imageItem.remove();
+            const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
+            if (imgEl) imgEl.remove();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
         });
-        element.querySelector(".fa-trash-alt").addEventListener("click", () => {
-            element.remove();
-            const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
-            if (textEl) textEl.remove();
+        imageItem.addEventListener("click", () => {
+            const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
+            if (imgEl) {
+                selectElement(imgEl);
+            }
         });
     }
 
@@ -134,8 +377,21 @@ document.addEventListener("DOMContentLoaded", () => {
         newCard.className = "card";
         newCard.dataset.id = id;
         newCard.style.zIndex = "-1000";
-        newCard.innerHTML = `<h3>${name}</h3>`;
+        newCard.style.position = "relative";
         canvas.appendChild(newCard);
+        const pageTitleId = `title-${id}`;
+        addTextToSidebar(name, pageTitleId, id);
+        addTextElement(name, pageTitleId, id);
+    }
+
+    function attachPageClick(pageListItem, id) {
+        pageListItem.addEventListener("click", () => {
+            const allPages = pagesList.querySelectorAll(".page");
+            allPages.forEach((p) => (p.style.border = "none"));
+            pageListItem.style.border = "2px solid white";
+            activePageId = id;
+            hideToolbar();
+        });
     }
 
     function addPageToSidebar(name, id) {
@@ -144,116 +400,106 @@ document.addEventListener("DOMContentLoaded", () => {
         pageListItem.dataset.id = id;
         pageListItem.innerHTML = `<div class="name">${name}</div><div class="fas fa-trash-alt"></div>`;
         pagesList.appendChild(pageListItem);
-
-        pageListItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+        attachPageClick(pageListItem, id);
+        pageListItem.querySelector(".fa-trash-alt").addEventListener("click", (e) => {
+            e.stopPropagation();
             pageListItem.remove();
             const cardToRemove = canvas.querySelector(`.card[data-id="${id}"]`);
             if (cardToRemove) cardToRemove.remove();
-            const texts = canvas.querySelectorAll(`.draggable-text[data-page-id="${id}"]`);
-            texts.forEach((t) => t.remove());
+            const elementsOnPage = canvas.querySelectorAll(`[data-page-id="${id}"]`);
+            elementsOnPage.forEach((el) => {
+                el.remove();
+                const sideTextItem = elementsList.querySelector(`.element input[data-id="${el.dataset.id}"]`);
+                if (sideTextItem) sideTextItem.parentElement.remove();
+                const sideImageItem = imageList.querySelector(`.image-item[data-id="${el.dataset.id}"]`);
+                if (sideImageItem) sideImageItem.remove();
+            });
             const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
             sideItems.forEach((s) => s.remove());
-            pageCounter--;
+            const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
+            sideImageItemsOnPage.forEach(item => item.remove());
+
+            if (activePageId === id) activePageId = null;
+            hideToolbar();
         });
     }
 
-    // =================================================================
-    // --- PHẦN 4: KHỞI TẠO ---
-    // =================================================================
     function initializeEditor() {
         if (!card) return;
         const initialSidebarTexts = elementsList.querySelectorAll(".element");
         const initialCardTexts = card.querySelectorAll("h3, h1, p");
-
         initialSidebarTexts.forEach((sidebarItem, index) => {
             const textOnCard = initialCardTexts[index];
             if (textOnCard) {
-                const id = `initial-text-${index}`;
+                const id = `initial-text-${Date.now() + index}`;
                 const pageId = "initial-page-0";
                 sidebarItem.dataset.id = id;
                 sidebarItem.dataset.pageId = pageId;
+                const existingNameDiv = sidebarItem.querySelector(".name");
+                if (existingNameDiv) {
+                    const inputElement = document.createElement("input");
+                    inputElement.className = "name";
+                    inputElement.value = existingNameDiv.innerText;
+                    inputElement.dataset.id = id;
+                    sidebarItem.replaceChild(inputElement, existingNameDiv);
+
+                    inputElement.addEventListener("input", (e) => {
+                        const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
+                        if (textEl) textEl.innerText = e.target.value;
+                    });
+                }
                 textOnCard.dataset.id = id;
                 textOnCard.dataset.pageId = pageId;
-
-                const cardWidth = card.clientWidth;
-                const cardHeight = card.clientHeight;
-
-                // Căn lề trái khoảng 15% chiều rộng của card
+                const cardRect = card.getBoundingClientRect();
+                const cardWidth = cardRect.width;
+                const cardHeight = cardRect.height;
                 textOnCard.style.left = `${cardWidth * 0.3}px`;
-
-                // Căn chỉnh theo chiều dọc
                 let newTop;
-                if (index === 0) { // Dòng "Save the Date"
-                    newTop = cardHeight * 0.2;
-                } else if (index === 1) { // Dòng "A & B"
-                    newTop = cardHeight * 0.4;
-                    textOnCard.style.left = `${cardWidth * 0.35}px`;
-                } else { // Dòng ngày tháng
-                    newTop = cardHeight * 0.65;
-                    textOnCard.style.left = `${cardWidth * 0.35}px`;
-                }
+                if (index === 0) newTop = cardHeight * 0.2;
+                else if (index === 1) { newTop = cardHeight * 0.4; textOnCard.style.left = `${cardWidth * 0.35}px`; }
+                else { newTop = cardHeight * 0.65; textOnCard.style.left = `${cardWidth * 0.35}px`; }
                 textOnCard.style.top = `${newTop}px`;
-
-                // Áp dụng font-size và font-weight để giả lập thẻ H1, H3, P
-                if (index === 0) { // h3 - Save the Date
-                    textOnCard.style.fontSize = "1.7em";
-                    textOnCard.style.fontWeight = "bold";
-                } else if (index === 1) { // h1 - A & B
-                    textOnCard.style.fontSize = "2.5em";
-                    textOnCard.style.fontWeight = "bold";
-                } else { // p - Date
-                    textOnCard.style.fontSize = "1.2em";
-                    textOnCard.style.fontWeight = "normal";
-                }
-
+                if (index === 0) { textOnCard.style.fontSize = "1.7em"; textOnCard.style.fontWeight = "bold"; }
+                else if (index === 1) { textOnCard.style.fontSize = "2.5em"; textOnCard.style.fontWeight = "bold"; }
+                else { textOnCard.style.fontSize = "1.2em"; textOnCard.style.fontWeight = "normal"; }
                 initTextElement(textOnCard, id, pageId, true);
-
                 sidebarItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
                     sidebarItem.remove();
                     textOnCard.remove();
+                    if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
                 });
             }
         });
-
         const initialPage = pagesList.querySelector(".page");
         if (initialPage && card) {
             const id = "initial-page-0";
-            initialPage.dataset.id = id;
-            card.dataset.id = id;
-            card.style.zIndex = "-1000";
+            initialPage.dataset.id = id; card.dataset.id = id; card.style.zIndex = "-1000";
+            attachPageClick(initialPage, id);
+            activePageId = id; initialPage.style.border = "2px solid white";
+            const trashIcon = initialPage.querySelector(".fa-trash-alt");
+            if (trashIcon) {
+                trashIcon.addEventListener("click", (e) => {
+                    e.stopPropagation(); initialPage.remove(); card.remove();
+                    const elementsOnPage = canvas.querySelectorAll(`[data-page-id="${id}"]`);
+                    elementsOnPage.forEach((el) => el.remove());
+                    const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
+                    sideItems.forEach((s) => s.remove());
+                    const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
+                    sideImageItemsOnPage.forEach(item => item.remove());
 
-            let trashIcon = initialPage.querySelector(".fa-trash-alt");
-            if (!trashIcon) {
-                trashIcon = document.createElement("div");
-                trashIcon.className = "fas fa-trash-alt";
-                initialPage.appendChild(trashIcon);
+                    if (activePageId === id) activePageId = null;
+                });
             }
-
-            trashIcon.addEventListener("click", () => {
-                initialPage.remove();
-                card.remove();
-                const texts = canvas.querySelectorAll(`.draggable-text[data-page-id="${id}"]`);
-                texts.forEach((t) => t.remove());
-                const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
-                sideItems.forEach((s) => s.remove());
-            });
         }
         pageCounter = pagesList.querySelectorAll(".page").length;
     }
 
-    // =================================================================
-    // --- PHẦN 5: SỰ KIỆN ---
-    // =================================================================
     addTextBtn.addEventListener("click", () => {
-        const activePage = pagesList.querySelector(".page");
-        if (!activePage) return;
-
-        const pageId = activePage.dataset.id;
-        const defaultText = "New Text";
+        if (!activePageId) { alert("Please select a page first!"); return; }
         const id = `text-${Date.now()}`;
-
-        addTextToSidebar(defaultText, id, pageId);
-        addTextElement(defaultText, id, pageId);
+        addTextToSidebar("New Text", id, activePageId);
+        const newEl = addTextElement("New Text", id, activePageId);
+        selectElement(newEl);
     });
 
     addPageBtn.addEventListener("click", () => {
@@ -262,6 +508,43 @@ document.addEventListener("DOMContentLoaded", () => {
         const id = `page-${Date.now()}`;
         addPageToSidebar(defaultName, id);
         createPageElement(defaultName, id);
+        const newPageEl = pagesList.querySelector(`.page[data-id="${id}"]`);
+        if (newPageEl) {
+            const allPages = pagesList.querySelectorAll(".page");
+            allPages.forEach((p) => (p.style.border = "none"));
+            newPageEl.style.border = "2px solid white";
+            activePageId = id;
+        }
+    });
+
+    textBtn.addEventListener("click", () => {
+        textSidebar.style.display = "block";
+        imageSidebar.style.display = "none";
+        textBtn.classList.add("sideActive");
+        imagesBtn.classList.remove("sideActive");
+    });
+
+    imagesBtn.addEventListener("click", () => {
+        textSidebar.style.display = "none";
+        imageSidebar.style.display = "block";
+        textBtn.classList.remove("sideActive");
+        imagesBtn.classList.add("sideActive");
+    });
+
+    uploadImageInput.addEventListener("change", (e) => {
+        if (!activePageId) { alert("Please select a page to add the image to!"); return; }
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageUrl = event.target.result;
+                const id = `image-${Date.now()}`;
+                const newEl = addImageElement(imageUrl, id, activePageId, file.name);
+                selectElement(newEl);
+            };
+            reader.readAsDataURL(file);
+        }
+        e.target.value = '';
     });
 
     initializeEditor();

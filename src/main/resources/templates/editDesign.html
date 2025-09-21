@@ -10,9 +10,9 @@
 
     <!-- Font Awesome icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
 </head>
 <body>
-<!-- Header -->
 <header class="header">
     <div class="left-controls">
         <button class="btn">Save Design</button>
@@ -26,64 +26,71 @@
     </div>
 </header>
 
-<!-- Main layout -->
 <div class="main">
-    <!-- Sidebar -->
     <aside class="sidebar fade-in">
         <h2>Wedding Designer</h2>
         <div class="subtitle">Create your perfect invitation</div>
 
         <div class="toolbar">
-            <div class="tool-item">
+            <div class="tool-item text-btn sideActive">
                 <i class="fas fa-font"></i>
                 <span>Text</span>
             </div>
-            <div class="tool-item">
+            <div class="tool-item background-btn">
                 <i class="fas fa-image"></i>
                 <span>Background</span>
             </div>
-            <div class="tool-item">
+            <div class="tool-item images-btn">
                 <i class="fas fa-photo-film"></i>
                 <span>Images</span>
             </div>
-            <div class="tool-item">
+            <div class="tool-item AI-btn">
                 <i class="fas fa-robot"></i>
                 <span>AI Assistant</span>
             </div>
         </div>
 
-        <button class="add-btn" id="addTextBtn">+ Add Text Element</button>
-        <div class="quality">Text Elements</div>
-        <div class="elements" id="elementsList">
-            <div class="element">
-                <div class="name" id="save_the_date">Save the Date</div>
-                <div class="fas fa-trash-alt"></div>
+        <div class="text-sidebar">
+            <button class="add-btn" id="addTextBtn">+ Add Text Element</button>
+            <div class="quality">Text Elements</div>
+            <div class="elements" id="elementsList">
+                <div class="element">
+                    <div class="name" id="save_the_date">Save the Date</div>
+                    <div class="fas fa-trash-alt"></div>
+                </div>
+                <div class="element">
+                    <div class="name" id="element_name">John & Jane</div>
+                    <div class="fas fa-trash-alt"></div>
+                </div>
+                <div class="element">
+                    <div class="name" id="element_date">June 15, 2024</div>
+                    <div class="fas fa-trash-alt"></div>
+                </div>
             </div>
-            <div class="element">
-                <div class="name" id="element_name">John & Jane</div>
-                <div class="fas fa-trash-alt"></div>
-            </div>
-            <div class="element">
-                <div class="name" id="element_date">June 15, 2024</div>
-                <div class="fas fa-trash-alt"></div>
+
+            <button class="add-div" id="addPagebtn">+ Add Page Element</button>
+            <div class="quality">Page Elements</div>
+            <div class="pages" id="pagesList">
+                <div class="page">
+                    <div class="name">Page 1</div>
+                    <div class="fas fa-trash-alt"></div>
+                </div>
             </div>
         </div>
 
-        <button class="add-div" id="addPagebtn">+ Add Page Element</button>
-        <div class="quality">Page Elements</div>
-        <div class="pages" id="pagesList">
-            <div class="page">
-                <div class="name">Page 1</div>
-                <div class="fas fa-trash-alt"></div>
-            </div>
+        <div class="image-sidebar" style="display: none;">
+            <label for="uploadImageInput" class="add-btn">
+                + Upload Image
+            </label>
+            <input type="file" id="uploadImageInput" accept="image/*,video/*" style="display: none;" />
+            <div class="quality">Uploaded Images</div>
+            <div class="elements" id="imageList"></div>
         </div>
 
     </aside>
 
-    <!-- Canvas -->
     <main class="canvas-wrap">
         <div class="canvas fade-in" role="region" aria-label="Design canvas">
-            <!-- Card preview -->
             <div class="card" id="card">
                 <h3>Save the Date</h3>
                 <h1>A &amp; B</h1>
@@ -93,7 +100,20 @@
     </main>
 </div>
 
-<!-- Link JS -->
+<div id="textToolbar" class="toolbar" style="display:none; position:absolute; top:10px; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #ccc; padding:5px; border-radius:6px;">
+    <select id="tbFont">
+        <option value="Arial">Arial</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+    </select>
+    <input id="tbSize" type="number" min="6" max="100" value="16" style="width:50px" />
+    <button id="tbBold"><b>B</b></button>
+    <button id="tbItalic"><i>I</i></button>
+    <button id="tbUnderline"><u>U</u></button>
+    <input id="tbColor" type="color" />
+</div>
+
 <script src="/js/editDesign.js"></script>
 </body>
 </html>

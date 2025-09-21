@@ -221,5 +221,74 @@ body{
     outline: none;
     border-bottom: 1px solid #6b5136;
 }
+/* --- Bổ sung CSS cho text element & toolbar --- */
+.draggable-text {
+    position: absolute;
+    min-width: 60px;
+    min-height: 30px;
+    border: 1px solid transparent;
+    padding: 4px;
+    resize: both;
+    overflow: hidden;
+    cursor: move;
+    z-index: 1000;
+}
+.draggable-text.active {
+    border: 1px solid purple;
+}
+.floating-toolbar {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    padding: 4px;
+    display: none; /* mặc định ẩn */
+    gap: 6px;
+    z-index: 2000;
+}
+.floating-toolbar button,
+.floating-toolbar select,
+.floating-toolbar input {
+    border: none;
+    background: none;
+    cursor: pointer;
+}
 
+.sideActive {
+    background-color: #f0e68c;
+    border-radius: 4px;
+    font-weight: bold;
+}
 
+.draggable-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 2px dashed transparent; /* Viền mờ mặc định */
+}
+/* Style cho danh sách ảnh trong sidebar */
+.element-image {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    margin-top: 5px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 5px;
+}
+.element-image img {
+    width: 45px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.element-image .fa-trash-alt {
+    cursor: pointer;
+    padding: 5px;
+    color: #aaa;
+    transition: color 0.2s;
+}
+.element-image .fa-trash-alt:hover {
+    color: #f44336;
+}
