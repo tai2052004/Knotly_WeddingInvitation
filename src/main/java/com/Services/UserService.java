@@ -1,5 +1,6 @@
 package com.Services;
 
+import com.Model.Users;
 import com.Repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +12,10 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public boolean login(String email, String password) {
+
+    public Users authenticate(String email, String password) {
         return userRepository.findByEmail(email)
-                .map(users -> password.equals(users.getPassword()))
-                .orElse(false);
+                .filter(users -> password.equals(users.getPassword()))
+                .orElse(null);
     }
 }
