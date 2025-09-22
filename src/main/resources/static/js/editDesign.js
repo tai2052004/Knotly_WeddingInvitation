@@ -520,15 +520,19 @@ document.addEventListener("DOMContentLoaded", () => {
     textBtn.addEventListener("click", () => {
         textSidebar.style.display = "block";
         imageSidebar.style.display = "none";
+        backgroundSidebar.style.display = "none";
         textBtn.classList.add("sideActive");
         imagesBtn.classList.remove("sideActive");
+        backgroundBtn.classList.remove("sideActive");
     });
 
     imagesBtn.addEventListener("click", () => {
         textSidebar.style.display = "none";
         imageSidebar.style.display = "block";
+        backgroundSidebar.style.display = "none";
         textBtn.classList.remove("sideActive");
         imagesBtn.classList.add("sideActive");
+        backgroundBtn.classList.remove("sideActive");
     });
 
     uploadImageInput.addEventListener("change", (e) => {
@@ -548,4 +552,178 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     initializeEditor();
+// --- Lấy các phần tử DOM cho background-sidebar ---
+    const backgroundBtn = document.querySelector(".background-btn");
+    const backgroundSidebar = document.querySelector(".background-sidebar");
+    const mainDiv = document.querySelector(".main");
+    const bgColorPicker = document.getElementById("bgColorPicker");
+    const colorPresets = document.querySelector(".color-presets");
+    const uploadBgInput = document.getElementById("uploadBgInput");
+    const uploadedBackgrounds = document.getElementById("uploadedBackgrounds");
+
+// Lấy thẻ body thay vì main
+    const body = document.body;
+// Lấy tất cả các preset colors
+    const allPresetColors = document.querySelectorAll(".preset-color");
+
+// Hàm để xóa class 'selected' khỏi tất cả các màu
+    function deselectAllPresets() {
+        allPresetColors.forEach(preset => preset.classList.remove("selected"));
+    }
+
+// --- Chuyển đổi giữa các sidebar ---
+    backgroundBtn.addEventListener("click", () => {
+        textSidebar.style.display = "none";
+        imageSidebar.style.display = "none";
+        backgroundSidebar.style.display = "block";
+        textBtn.classList.remove("sideActive");
+        imagesBtn.classList.remove("sideActive");
+        backgroundBtn.classList.add("sideActive");
+    });
+
+// --- Chức năng đổi màu background bằng bảng màu ---
+    if (bgColorPicker) {
+        bgColorPicker.addEventListener("input", (e) => {
+            body.style.backgroundColor = e.target.value;
+            body.style.backgroundImage = 'none';
+
+            // Bỏ chọn tất cả các màu preset
+            deselectAllPresets();
+        });
+    }
+
+// --- Chức năng chọn màu background có sẵn ---
+    if (colorPresets) {
+        colorPresets.addEventListener("click", (e) => {
+            if (e.target.classList.contains("preset-color")) {
+                const color = e.target.style.backgroundColor;
+                body.style.backgroundColor = color;
+                body.style.backgroundImage = 'none';
+
+                // Cập nhật bảng màu và lớp 'selected'
+                if (bgColorPicker) {
+                    bgColorPicker.value = rgbToHex(color);
+                }
+                deselectAllPresets();
+                e.target.classList.add("selected");
+            }
+        });
+    }
+
+// --- Chức năng upload ảnh/video làm background ---
+    if (uploadBgInput) {
+        uploadBgInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const url = URL.createObjectURL(file);
+
+            // Thêm thumbnail vào sidebar
+            const thumbnailDiv = document.createElement("div");
+            thumbnailDiv.className = "uploaded-bg-item";
+            thumbnailDiv.dataset.url = url;
+
+            if (file.type.startsWith("image/")) {
+                thumbnailDiv.innerHTML = `<img src="${url}" alt="background thumbnail">`;
+            } else if (file.type.startsWith("video/")) {
+                thumbnailDiv.innerHTML = `<video src="${url}" autoplay muted loop></video>`;
+            }
+
+            // Tạo nút xóa
+            const deleteBtn = document.createElement("div");
+            deleteBtn.className = "uploaded-bg-delete-btn";
+            deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
+
+            // Thêm nút xóa vào thumbnail
+            thumbnailDiv.appendChild(deleteBtn);
+
+            if (uploadedBackgrounds) {
+                uploadedBackgrounds.appendChild(thumbnailDiv);
+            }
+
+            // Bỏ chọn tất cả các màu preset
+            deselectAllPresets();
+
+            // Áp dụng background
+            body.style.backgroundColor = 'transparent';
+            const currentVideo = body.querySelector('video');
+            if(currentVideo) {
+                body.removeChild(currentVideo);
+            }
+            if (file.type.startsWith("image/")) {
+                body.style.backgroundImage = `url(${url})`;
+                body.style.backgroundSize = "cover";
+                body.style.backgroundPosition = "center";
+                body.style.backgroundRepeat = "no-repeat";
+            } else if (file.type.startsWith("video/")) {
+                const videoEl = document.createElement('video');
+                videoEl.src = url;
+                videoEl.autoplay = true;
+                videoEl.muted = true;
+                videoEl.loop = true;
+                videoEl.style.position = 'fixed';
+                videoEl.style.top = '0';
+                videoEl.style.left = '0';
+                videoEl.style.width = '100vw';
+                videoEl.style.height = '100vh';
+                videoEl.style.objectFit = 'cover';
+                videoEl.style.zIndex = '-1';
+                body.appendChild(videoEl);
+                body.style.backgroundImage = 'none';
+            }
+
+            // Sự kiện click để chọn lại background đã upload
+            thumbnailDiv.addEventListener("click", (e) => {
+                // Ngăn sự kiện click lan ra nút xóa
+                if (e.target.closest('.uploaded-bg-delete-btn')) return;
+
+                const currentVideo = body.querySelector('video');
+                if(currentVideo) {
+                    body.removeChild(currentVideo);
+                }
+                if (file.type.startsWith("image/")) {
+                    body.style.backgroundImage = `url(${url})`;
+                } else if (file.type.startsWith("video/")) {
+                    const videoEl = document.createElement('video');
+                    videoEl.src = url;
+                    videoEl.autoplay = true;
+                    videoEl.muted = true;
+                    videoEl.loop = true;
+                    videoEl.style.position = 'fixed';
+                    videoEl.style.top = '0';
+                    videoEl.style.left = '0';
+                    videoEl.style.width = '100vw';
+                    videoEl.style.height = '100vh';
+                    videoEl.style.objectFit = 'cover';
+                    videoEl.style.zIndex = '-1';
+                    body.appendChild(videoEl);
+                    body.style.backgroundImage = 'none';
+                }
+            });
+
+            // Sự kiện click để xóa background
+            deleteBtn.addEventListener("click", () => {
+                thumbnailDiv.remove();
+
+                // Nếu background đang được áp dụng là background này, hãy xóa nó
+                if (body.style.backgroundImage.includes(url)) {
+                    body.style.backgroundImage = 'none';
+                    body.style.backgroundColor = '#fbf6f2'; // Trở về màu mặc định
+
+                }
+                const videoToRemove = body.querySelector(`video[src="${url}"]`);
+                if (videoToRemove) {
+                    videoToRemove.remove();
+                }
+            });
+        });
+    }
+
+// Chọn màu mặc định khi tải trang
+    const defaultColorPreset = document.querySelector('.preset-color[style*="#fbf6f2"]');
+    if (defaultColorPreset) {
+        defaultColorPreset.classList.add("selected");
+    }
+
+
 });

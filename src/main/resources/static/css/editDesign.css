@@ -1,12 +1,21 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html,body { height: 100%; }
-body{
+/* General Resets */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
     font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-    background-color: #fbf6f2; /* nền tổng */
+    background-color: #fbf6f2; /* Main app background */
     color: #3b352b;
 }
 
-/* Header */
+/* --- Header --- */
 .header {
     height: 56px;
     background: linear-gradient(180deg, #d7c6ae, #cdbb9b);
@@ -17,12 +26,15 @@ body{
     border-bottom: 1px solid rgba(0,0,0,0.06);
     box-shadow: 0 2px 0 rgba(255,255,255,0.2) inset;
     position: relative;
+    z-index: 1000;
 }
+
 .left-controls, .right-controls {
     display: flex;
     gap: 10px;
     align-items: center;
 }
+
 .title {
     position: absolute;
     left: 50%;
@@ -32,6 +44,7 @@ body{
     letter-spacing: 0.5px;
     color: #3b2f21;
 }
+
 .btn {
     background: white;
     border-radius: 8px;
@@ -40,7 +53,13 @@ body{
     border: 1px solid rgba(0,0,0,0.06);
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
 }
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
 .btn.primary {
     background: #6b5136;
     color: #fff;
@@ -48,14 +67,14 @@ body{
     box-shadow: 0 4px 10px rgba(107,81,54,0.25);
 }
 
-/* Main */
+/* --- Main Content --- */
 .main {
-    display:flex;
+    display: flex;
     height: calc(100vh - 56px);
     overflow: hidden;
 }
 
-/* Sidebar */
+/* --- Sidebar --- */
 .sidebar {
     background: linear-gradient(180deg, #e9ddc8, #e0d3bc);
     padding: 22px;
@@ -63,27 +82,35 @@ body{
     overflow-y: auto;
     width: 300px;
     overflow-x: hidden;
+    position: relative;
+    z-index: 900;
 }
+
 .sidebar h2 {
-    font-size:18px;
-    margin-bottom:6px;
+    font-size: 18px;
+    margin-bottom: 6px;
     color: rgba(168, 142, 79, 1);
 }
+
 .sidebar .subtitle {
-    font-size:12px;
-    opacity:0.85;
-    margin-bottom:14px;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-bottom: 14px;
 }
+
 .toolbar {
     width: 300px;
     display: flex;
     background: #e6d7bb;
     gap: 0;
 }
+
 .sidebar .toolbar {
     width: calc(100% + 44px);
     margin-left: -22px;
+    border-bottom: 1px solid #d7c6ae;
 }
+
 .tool-item {
     flex: 1;
     display: flex;
@@ -93,16 +120,25 @@ body{
     background: white;
     padding: 8px 4px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: background 0.2s, border-bottom 0.2s;
+    border-bottom: 3px solid transparent;
 }
+
 .tool-item:hover {
-    background: #e2d3bf;
+    background: #fbf6f2;
 }
+
+.tool-item.sideActive {
+    background-color: #fbf6f2;
+    border-bottom: 3px solid #6b5136;
+}
+
 .tool-item i {
     font-size: 16px;
     margin-bottom: 4px;
     color: #5a4b32;
 }
+
 .tool-item span {
     font-size: 13px;
     color: #4d3f2c;
@@ -111,105 +147,69 @@ body{
 }
 
 .add-btn, .add-div {
-    display:block;
+    display: block;
     margin: 12px 0 18px 0;
-    background:rgba(168, 142, 79, 1);
-    color:#fff;
-    padding:10px;
-    border-radius:10px;
-    text-align:center;
-    font-weight:600;
-    cursor:pointer;
+    background: rgba(168, 142, 79, 1);
+    color: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+    cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-    border:none;
+    border: none;
     width: 100%;
     height: 40px;
+    transition: transform 0.2s;
 }
+
+.add-btn:hover, .add-div:hover {
+    transform: translateY(-1px);
+}
+
 .quality {
     padding: 15px 3px;
+    font-weight: 600;
+    color: #a88e4f;
 }
-.elements, .pages {
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    cursor: pointer;
-}
-.element, .page {
-    background: linear-gradient(180deg, #e9ddc8, #e0d3bc);
-    padding:10px;
-    border-radius:8px;
-    font-size:13px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border:2px solid white;
-}
-.element .name, .page .name { color:#3b352b; }
-.element .actions, .page .actions { opacity:0.7; font-size:12px; }
 
-/* Canvas */
-.canvas-wrap {
-    flex: 1;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    padding: 40px;
-    overflow:auto;
-    position:relative;
-}
-.canvas {
-    width: auto;
-    height:auto;
-    position:relative;
-    align-items:center;
-    overflow: auto;
-    margin-top: 60px;
+.elements, .pages {
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
-.selected-text {
-    outline: 2px dashed #4caf50;
-}
-.card {
-    width:400px;
-    height: 400px;
-    background-color: #e2d0b8;
-    padding:36px 28px;
-    border-radius:12px;
-    text-align:center;
-    box-shadow: 0 22px 30px rgba(0,0,0,0.12), 0 6px 8px rgba(0,0,0,0.06);
-    position: relative;
-    overflow: hidden;
-}
-.card h3 { font-size:18px; margin-bottom:30px; color:#675440; font-weight:600; z-index: 1000}
-.card h1 { font-size:36px; margin-bottom:50px; color:#4c3e31; letter-spacing:2px; z-index: 1000}
-.card p { font-size:14px; color:#4a3f36; opacity:0.95; z-index: 1000}
 
-/* Responsive */
-@media (max-width:980px){
-    .sidebar { display:none; }
-    .canvas { width:calc(100% - 40px); height: calc(100vh - 120px); }
+.element, .page {
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+    cursor: pointer;
 }
-.text-element {
-    position: absolute;
-    z-index: 1000; /* luôn nổi trên card */
+
+.element:hover, .page:hover {
+    border-color: #d7c6ae;
 }
-/* Hiệu ứng */
-.fade-in {
-    animation: fadeIn 550ms ease;
+
+.element .name, .page .name {
+    color: #3b352b;
 }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity:1; transform: translateY(0); }
+
+.element .fa-trash-alt, .page .fa-trash-alt {
+    color: #b8b8b8;
+    cursor: pointer;
+    transition: color 0.2s;
 }
-.draggable-text {
-    position: absolute;
-    font-size: 16px;
-    color: #3b2f21;
-    cursor: move;
-    user-select: none;
-    white-space: nowrap;
+
+.element .fa-trash-alt:hover, .page .fa-trash-alt:hover {
+    color: #e74c3c;
 }
+
 .element input.name {
     flex: 1;
     border: none;
@@ -217,25 +217,190 @@ body{
     font-size: 13px;
     color: #3b352b;
 }
+
 .element input.name:focus {
     outline: none;
     border-bottom: 1px solid #6b5136;
 }
-/* --- Bổ sung CSS cho text element & toolbar --- */
+
+/* --- Background Sidebar --- */
+.background-sidebar {
+    padding-top: 20px;
+}
+
+.background-color-control {
+    margin-bottom: 20px;
+}
+
+.background-color-control label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+#bgColorPicker {
+    width: 100%;
+    height: 40px;
+    border: none;
+    cursor: pointer;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.color-presets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.preset-color {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.preset-color:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.uploaded-backgrounds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.uploaded-bg-item {
+    width: 70px;
+    height: 70px;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.uploaded-bg-item:hover {
+    transform: scale(1.05);
+    border-color: #6b5136;
+}
+
+.uploaded-bg-item img, .uploaded-bg-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* --- Canvas and Card --- */
+.canvas-wrap {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px;
+    overflow: auto;
+    position: relative;
+}
+
+.canvas {
+    width: auto;
+    height: auto;
+    position: relative;
+    align-items: center;
+    overflow: auto;
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    width: 400px;
+    height: 400px;
+    background-color: #e2d0b8;
+    padding: 36px 28px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 22px 30px rgba(0,0,0,0.12), 0 6px 8px rgba(0,0,0,0.06);
+    position: relative;
+    overflow: hidden;
+    /* Card's content z-index needs to be above the background */
+    z-index: 10;
+}
+
+.card h3 {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #675440;
+    font-weight: 600;
+    z-index: 1000;
+}
+
+.card h1 {
+    font-size: 36px;
+    margin-bottom: 50px;
+    color: #4c3e31;
+    letter-spacing: 2px;
+    z-index: 1000;
+}
+
+.card p {
+    font-size: 14px;
+    color: #4a3f36;
+    opacity: 0.95;
+    z-index: 1000;
+}
+
+/* --- Draggable & Resizable Elements --- */
+.selected-element-outline {
+    outline: 2px solid #6b5136;
+    outline-offset: 4px;
+}
+
+.selected-image-outline {
+    border: 2px solid #6b5136;
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(to top left, #fff 50%, #eee 50%);
+    border: 1px solid #666;
+    border-top-left-radius: 3px;
+    cursor: nwse-resize;
+    z-index: 2001;
+    opacity: 0.8;
+    clip-path: polygon(0% 100%, 100% 100%, 100% 0%);
+    display: none; /* Initially hidden */
+}
+
 .draggable-text {
     position: absolute;
     min-width: 60px;
     min-height: 30px;
-    border: 1px solid transparent;
     padding: 4px;
-    resize: both;
-    overflow: hidden;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+.draggable-image {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
     cursor: move;
     z-index: 1000;
 }
-.draggable-text.active {
-    border: 1px solid purple;
-}
+
+/* --- Toolbar --- */
 .floating-toolbar {
     position: absolute;
     background: white;
@@ -243,52 +408,87 @@ body{
     border-radius: 6px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     padding: 4px;
-    display: none; /* mặc định ẩn */
+    display: none;
     gap: 6px;
-    z-index: 2000;
+    z-index: 3000;
 }
+
 .floating-toolbar button,
 .floating-toolbar select,
 .floating-toolbar input {
     border: none;
     background: none;
     cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: 14px;
 }
 
-.sideActive {
-    background-color: #f0e68c;
-    border-radius: 4px;
-    font-weight: bold;
+.floating-toolbar button[data-active="1"] {
+    background: #f0f0f0;
 }
 
-.draggable-image {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border: 2px dashed transparent; /* Viền mờ mặc định */
+/* --- Animations & Responsive --- */
+.fade-in {
+    animation: fadeIn 550ms ease;
 }
-/* Style cho danh sách ảnh trong sidebar */
-.element-image {
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 980px) {
+    .sidebar {
+        display: none;
+    }
+
+    .canvas-wrap {
+        padding: 20px;
+    }
+
+    .canvas {
+        margin-top: 0;
+    }
+
+    .card {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+    }
+}
+.preset-color.selected {
+    border: 3px solid #6b5136; /* Your desired border color */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transform: scale(1.1);
+}
+/* Thêm đoạn này vào file editDesign.css của bạn */
+
+.uploaded-bg-delete-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
     display: flex;
+    justify-content: center;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    margin-top: 5px;
-    background: rgba(0,0,0,0.1);
-    border-radius: 5px;
-}
-.element-image img {
-    width: 45px;
-    height: 45px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-.element-image .fa-trash-alt {
     cursor: pointer;
-    padding: 5px;
-    color: #aaa;
-    transition: color 0.2s;
+    font-size: 10px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.2s;
 }
-.element-image .fa-trash-alt:hover {
-    color: #f44336;
+
+.uploaded-bg-item:hover .uploaded-bg-delete-btn {
+    opacity: 1;
 }

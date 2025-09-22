@@ -78,6 +78,30 @@
             </div>
         </div>
 
+        <div class="background-sidebar" style="display: none;">
+            <div class="background-color-control">
+                <label for="bgColorPicker">Choose Color:</label>
+                <input type="color" id="bgColorPicker" value="#ffffff">
+            </div>
+
+            <div class="quality">Sample background</div>
+            <div class="color-presets">
+                <div class="preset-color" style="background-color: #fbf6f2;"></div>
+                <div class="preset-color" style="background-color: #f7e7e5;"></div>
+                <div class="preset-color" style="background-color: #e5f7f2;"></div>
+                <div class="preset-color" style="background-color: #f2e5f7;"></div>
+                <div class="preset-color" style="background-color: #e5f7ff;"></div>
+            </div>
+
+            <label for="uploadBgInput" class="add-btn">
+                + Upload background
+            </label>
+            <input type="file" id="uploadBgInput" accept="image/*,video/*" style="display: none;" />
+
+            <div class="quality">Background uploaded</div>
+            <div class="uploaded-backgrounds" id="uploadedBackgrounds"></div>
+        </div>
+
         <div class="image-sidebar" style="display: none;">
             <label for="uploadImageInput" class="add-btn">
                 + Upload Image
