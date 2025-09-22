@@ -1,4 +1,4 @@
-package com.controller;
+package com.Controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,10 +16,6 @@ public class WebRouting {
         return "editDesign";
     }
 
-    @GetMapping("/login")
-    public String login(Model model) {
-        return "login";
-    }
 
     @GetMapping("register")
     public String register(Model model) {
