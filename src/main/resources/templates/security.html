@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security</title>
+    <link rel="stylesheet" href="/css/profile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+    <!-- Sidebar giữ nguyên -->
+    <aside class="sidebar">
+        <div class="avatar-box">
+            <div class="avatar" id="avatarPreview"></div>
+            <input type="file" id="avatarInput" accept="image/*" style="display:none">
+            <button type="button" class="btn-change" id="btnChange">Change Profile picture</button>
+        </div>
+        <nav class="menu">
+            <a href="profile">Personal information</a>
+            <a href="">Transaction history</a>
+            <a href="security" class="active">Security</a>
+        </nav>
+    </aside>
+
+    <!-- Phần main content đổi password -->
+    <main class="content">
+        <h2>Security</h2>
+        <form class="profile-form">
+            <div class="info-row">
+                <label for="currentPassword">Current password</label>
+                <input type="password" id="currentPassword" name="currentPassword"
+                       placeholder="Enter current password">
+            </div>
+
+            <div class="info-row">
+                <label for="newPassword">New password</label>
+                <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password">
+            </div>
+
+            <div class="info-row">
+                <label for="confirmPassword">Confirm new password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword"
+                       placeholder="Confirm new password">
+            </div>
+
+            <button type="submit" class="btn-edit">Change password</button>
+        </form>
+    </main>
+</div>
+
+<script src="/js/profile.js"></script>
+</body>
+
+</html>
