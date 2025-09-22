@@ -31,4 +31,24 @@ public class WebRouting {
     public String confirmWeeding(Model model) {
         return "confirmWeeding";
     }
+
+    @GetMapping("forgotPassword")
+    public String forgotPassword(Model model) {
+        return "forgotPassword";
+    }
+
+    @GetMapping("resetPassword")
+    public String resetPassword(Model model) {
+        return "resetPassword";
+    }
+
+    @GetMapping("profile")
+    public String profile(Model model) {
+        return "profile";
+    }
+
+    @GetMapping("security")
+    public String sercurity(Model model) {
+        return "security";
+    }
 }

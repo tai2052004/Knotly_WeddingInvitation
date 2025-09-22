@@ -1,0 +1,185 @@
+/* ===== Reset ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background: #f4f6f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ===== Layout tổng ===== */
+.container {
+    max-width: 1100px;
+    margin: 40px auto;
+    display: grid;
+    grid-template-columns: 270px 1fr;
+    /* sidebar + content */
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+    background: #f9fbfd;
+    border-right: 1px solid #e0e6ef;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.avatar-box {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 12px;
+    background: #d8d8d8 center/cover no-repeat;
+    margin-bottom: 15px;
+}
+
+.btn-change {
+    padding: 8px 18px;
+    border: 1px solid #d1d9e6;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    color: #555;
+    transition: 0.3s;
+}
+
+.btn-change:hover {
+    background: #f0f4fa;
+}
+
+.menu {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.menu a {
+    text-decoration: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #444;
+    transition: 0.25s;
+}
+
+.menu a:hover {
+    background: #eaf3ff;
+    color: #0076d6;
+}
+
+.menu a.active {
+    background: #eaf3ff;
+    color: #0076d6;
+    font-weight: 600;
+}
+
+/* ===== Content ===== */
+.content {
+    padding: 50px 60px;
+}
+
+.content h2 {
+    color: #1a7ecf;
+    font-size: 24px;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.content h2::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: #1a7ecf;
+    border-radius: 2px;
+}
+
+/* ===== Form ===== */
+.profile-form .info-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    /* label 160px, input tự co */
+    column-gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid #e8edf3;
+    align-items: center;
+}
+
+.profile-form label {
+    color: #666;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.profile-form input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d4dbe5;
+    border-radius: 6px;
+    font-size: 15px;
+    color: #333;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-form input:focus {
+    border-color: #1a7ecf;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 126, 207, 0.15);
+}
+
+/* ===== Nút Edit ===== */
+.btn-edit {
+    display: block;
+    margin: 30px auto 0;
+    padding: 12px 30px;
+    background: linear-gradient(90deg, #b39150, #d0b179);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-edit:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .content {
+        padding: 30px 20px;
+    }
+
+    .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #e0e6ef;
+        padding: 30px 20px;
+    }
+}
