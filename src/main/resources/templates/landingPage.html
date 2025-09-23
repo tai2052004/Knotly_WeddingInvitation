@@ -421,12 +421,17 @@
         </div>
     </div>
     <header class="header" role="banner">
+        <img class="knotly" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/knotly-1.png" alt="Knotly logo" />
         <nav class="nav" role="navigation" aria-label="Main navigation">
             <a href="#features" class="link-4"><span class="text-wrapper-40">Features</span></a>
             <a href="#templates" class="link-5"><span class="text-wrapper-41">Templates</span></a>
             <a href="#how-it-works" class="link-6"><span class="text-wrapper-42">How It Works</span></a>
             <a href="#pricing" class="link-7"><span class="text-wrapper-43">Pricing</span></a>
         </nav>
+
+        <div class="auth-section">
+        <!-- Show login/register if not logged in -->
+        <div th:if="${user == null}">
         <a th:href="@{/login}" class="button-5" aria-label="Login to your account">
             <img class="SVG-11" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/svg.svg" alt="" aria-hidden="true" />
             <span class="text-wrapper-44">Login</span>
@@ -436,7 +441,13 @@
             <img class="SVG-12" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/svg-3.svg" alt="" aria-hidden="true" />
             <span class="text-wrapper-45" onclick="location.href='/register'" style="cusor:pointer;">Sign Up</span>
         </button>
-        <img class="knotly" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/knotly-1.png" alt="Knotly logo" />
+        </div>
+        <!-- Show username + logout if logged in -->
+        <div th:if="${user != null}">
+            <span>Welcome, <b th:text="${user.username}"></b>!</span>
+            <a th:href="@{/logout}" class="button-5">Logout</a>
+        </div>
+        </div>
     </header>
 </div>
 </body>

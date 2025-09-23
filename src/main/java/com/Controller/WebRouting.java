@@ -1,5 +1,7 @@
 package com.Controller;
 
+import com.Model.Users;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class WebRouting {
     @GetMapping("/")
-    public String home(Model model) {
+    public String home(Model model, HttpSession session) {
+        Users user = (Users) session.getAttribute("loggedInUser");
+        model.addAttribute("user", user);
         return "landingPage";
     }
 
@@ -17,37 +21,37 @@ public class WebRouting {
     }
 
 
-    @GetMapping("register")
+    @GetMapping("/register")
     public String register(Model model) {
         return "register";
     }
 
-    @GetMapping("design")
+    @GetMapping("/design")
     public String design(Model model) {
         return "design";
     }
 
-    @GetMapping("confirmWeeding")
+    @GetMapping("/confirmWeeding")
     public String confirmWeeding(Model model) {
         return "confirmWeeding";
     }
 
-    @GetMapping("forgotPassword")
+    @GetMapping("/forgotPassword")
     public String forgotPassword(Model model) {
         return "forgotPassword";
     }
 
-    @GetMapping("resetPassword")
+    @GetMapping("/resetPassword")
     public String resetPassword(Model model) {
         return "resetPassword";
     }
 
-    @GetMapping("profile")
+    @GetMapping("/profile")
     public String profile(Model model) {
         return "profile";
     }
 
-    @GetMapping("security")
+    @GetMapping("/security")
     public String sercurity(Model model) {
         return "security";
     }
