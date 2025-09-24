@@ -2,16 +2,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Lấy các phần tử DOM chính ---
     const addTextBtn = document.querySelector(".add-btn");
     const addPageBtn = document.getElementById("addPagebtn");
+    const confirmBtn = document.querySelector(".confirm-btn");
     const elementsList = document.querySelector(".elements");
     const pagesList = document.getElementById("pagesList");
+    const buttonsList = document.getElementById("buttonList");
     const canvas = document.querySelector(".canvas");
     const card = document.getElementById("card");
 
     // --- DOM cho quản lý sidebar và ảnh ---
     const textSidebar = document.querySelector(".text-sidebar");
     const imageSidebar = document.querySelector(".image-sidebar");
+    const backgroundSidebar = document.querySelector(".background-sidebar");
     const textBtn = document.querySelector(".text-btn");
     const imagesBtn = document.querySelector(".images-btn");
+    const backgroundBtn = document.querySelector(".background-btn");
     const uploadImageInput = document.getElementById("uploadImageInput");
     const imageList = document.getElementById("imageList");
 
@@ -66,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateToolbarUI(el) {
-        if (!el || !el.classList.contains("draggable-text")) return;
+        if (!el || (!el.classList.contains("draggable-text") && !el.classList.contains("draggable-button"))) return;
         const cs = window.getComputedStyle(el);
         const fontFamily = cs.fontFamily || "";
         const fontSize = parseInt(cs.fontSize) || 16;
@@ -86,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateToolbarPosition(el) {
-        if (!el || !el.classList.contains("draggable-text")) return;
+        if (!el || (!el.classList.contains("draggable-text") && !el.classList.contains("draggable-button"))) return;
         const rect = el.getBoundingClientRect();
         const tbRect = toolbar.getBoundingClientRect();
         const top = rect.top + window.scrollY - tbRect.height - 8;
@@ -99,17 +103,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
-            // Ẩn tay cầm kéo dãn của phần tử đã chọn trước đó
+            selectedElement.classList.remove("selected-button-outline");
             const oldHandle = selectedElement.querySelector(".resize-handle");
             if (oldHandle) oldHandle.style.display = "none";
         }
         selectedElement = el;
         if (selectedElement) {
-            // Hiển thị tay cầm kéo dãn của phần tử mới được chọn
             const currentHandle = selectedElement.querySelector(".resize-handle");
             if (currentHandle) currentHandle.style.display = "block";
 
-            if (selectedElement.classList.contains("draggable-text")) {
+            if (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")) {
                 selectedElement.classList.add("selected-element-outline");
                 toolbar.style.display = "flex";
                 updateToolbarUI(selectedElement);
@@ -125,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
-            // Ẩn tay cầm kéo dãn khi không có phần tử nào được chọn
+            selectedElement.classList.remove("selected-button-outline");
             const handle = selectedElement.querySelector(".resize-handle");
             if (handle) handle.style.display = "none";
         }
@@ -133,12 +136,36 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedElement = null;
     }
 
-    tbFont.addEventListener("change", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.fontFamily = e.target.value || ""; });
-    tbSize.addEventListener("input", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.fontSize = e.target.value + "px"; });
-    tbColor.addEventListener("input", (e) => { if (selectedElement && selectedElement.classList.contains("draggable-text")) selectedElement.style.color = e.target.value; });
-    tbBold.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).fontWeight; selectedElement.style.fontWeight = (cur === "700" || cur === "bold") ? "normal" : "bold"; updateToolbarUI(selectedElement); });
-    tbItalic.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).fontStyle; selectedElement.style.fontStyle = (cur === "italic") ? "normal" : "italic"; updateToolbarUI(selectedElement); });
-    tbUnderline.addEventListener("click", () => { if (!selectedElement || !selectedElement.classList.contains("draggable-text")) return; const cur = window.getComputedStyle(selectedElement).textDecorationLine || ""; selectedElement.style.textDecoration = (cur.indexOf("underline") !== -1) ? "none" : "underline"; updateToolbarUI(selectedElement); });
+    tbFont.addEventListener("change", (e) => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
+            selectedElement.style.fontFamily = e.target.value || "";
+    });
+    tbSize.addEventListener("input", (e) => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
+            selectedElement.style.fontSize = e.target.value + "px";
+    });
+    tbColor.addEventListener("input", (e) => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
+            selectedElement.style.color = e.target.value;
+    });
+    tbBold.addEventListener("click", () => {
+        if (!selectedElement || (!selectedElement.classList.contains("draggable-text") && !selectedElement.classList.contains("draggable-button"))) return;
+        const cur = window.getComputedStyle(selectedElement).fontWeight;
+        selectedElement.style.fontWeight = (cur === "700" || cur === "bold") ? "normal" : "bold";
+        updateToolbarUI(selectedElement);
+    });
+    tbItalic.addEventListener("click", () => {
+        if (!selectedElement || (!selectedElement.classList.contains("draggable-text") && !selectedElement.classList.contains("draggable-button"))) return;
+        const cur = window.getComputedStyle(selectedElement).fontStyle;
+        selectedElement.style.fontStyle = (cur === "italic") ? "normal" : "italic";
+        updateToolbarUI(selectedElement);
+    });
+    tbUnderline.addEventListener("click", () => {
+        if (!selectedElement || (!selectedElement.classList.contains("draggable-text") && !selectedElement.classList.contains("draggable-button"))) return;
+        const cur = window.getComputedStyle(selectedElement).textDecorationLine || "";
+        selectedElement.style.textDecoration = (cur.indexOf("underline") !== -1) ? "none" : "underline";
+        updateToolbarUI(selectedElement);
+    });
 
     let resizingEl = null; let resizeStartX = 0; let resizeStartY = 0; let resizeStartW = 0; let resizeStartH = 0;
     document.addEventListener("mousemove", (e) => {
@@ -149,10 +176,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const newH = Math.max(20, resizeStartH + dy);
             resizingEl.style.width = newW + "px";
             resizingEl.style.height = newH + "px";
-            if (selectedElement === resizingEl && resizingEl.classList.contains('draggable-text')) updateToolbarPosition(resizingEl);
+            if (selectedElement === resizingEl && (resizingEl.classList.contains('draggable-text') || resizingEl.classList.contains('draggable-button')))
+                updateToolbarPosition(resizingEl);
         }
     });
-    document.addEventListener("mouseup", () => { if (resizingEl) { resizingEl = null; document.body.style.userSelect = ""; } });
+    document.addEventListener("mouseup", () => {
+        if (resizingEl) {
+            resizingEl = null;
+            document.body.style.userSelect = "";
+        }
+    });
 
     function makeDraggable(el) {
         let offsetX, offsetY, isDown = false;
@@ -176,7 +209,8 @@ document.addEventListener("DOMContentLoaded", () => {
             y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
-            if (selectedElement === el && el.classList.contains('draggable-text')) updateToolbarPosition(el);
+            if (selectedElement === el && (el.classList.contains('draggable-text') || el.classList.contains('draggable-button')))
+                updateToolbarPosition(el);
         });
         document.addEventListener("mouseup", () => {
             if (isDown) {
@@ -202,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         el.addEventListener("dblclick", (e) => {
             e.stopPropagation();
-            if (el.classList.contains("draggable-text")) {
+            if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
                 el.contentEditable = "true";
                 el.focus();
                 toolbar.style.display = "none";
@@ -219,13 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sideTextItem) sideTextItem.parentElement.remove();
             const sideImageItem = imageList.querySelector(`.image-item[data-id="${id}"]`);
             if (sideImageItem) sideImageItem.remove();
-
+            const sideButtonItem = buttonsList.querySelector(`.button-item[data-id="${id}"]`);
+            if (sideButtonItem) sideButtonItem.remove();
             hideToolbar();
         }
     });
 
     document.addEventListener("mousedown", (e) => {
-        const insideElement = !!e.target.closest(".draggable-text, .draggable-image");
+        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button");
         const insideToolbar = !!e.target.closest("#floatingToolbar");
         if (!insideElement && !insideToolbar) {
             hideToolbar();
@@ -253,7 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
         resizeHandle.style.borderTopLeftRadius = "3px";
         resizeHandle.style.cursor = "nwse-resize";
         resizeHandle.style.zIndex = "2001";
-        // ẨN TAY CẦM KÉO DÃN BAN ĐẦU
         resizeHandle.style.display = "none";
         resizeHandle.style.opacity = "0.8";
         resizeHandle.style.clipPath = "polygon(0% 100%, 100% 100%, 100% 0%)";
@@ -315,11 +349,42 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function initButtonElement(buttonEl, id, pageId, keepPosition = false) {
+        buttonEl.classList.add("draggable-button");
+        buttonEl.contentEditable = "false";
+        buttonEl.style.padding = "8px 16px";
+        buttonEl.style.border = "1px solid #ccc";
+        buttonEl.style.borderRadius = "4px";
+        buttonEl.style.backgroundColor = "#ffffff";
+        initCanvasElement(buttonEl, id, pageId, keepPosition);
+
+        buttonEl.addEventListener("blur", () => {
+            buttonEl.contentEditable = "false";
+            const input = buttonsList.querySelector(`input[data-id="${id}"]`);
+            if (input) input.value = buttonEl.innerText;
+            if (selectedElement === buttonEl) {
+                selectElement(buttonEl);
+            }
+        });
+        buttonEl.addEventListener("mousedown", (e) => {
+            if (buttonEl.isContentEditable || buttonEl.contentEditable === "true") {
+                e.stopPropagation();
+            }
+        });
+    }
+
     function addTextElement(text, id, pageId) {
         const textEl = document.createElement("div");
         textEl.innerText = text;
         initTextElement(textEl, id, pageId);
         return textEl;
+    }
+
+    function addButtonElement(text, id, pageId) {
+        const buttonEl = document.createElement("button");
+        buttonEl.innerText = text;
+        initButtonElement(buttonEl, id, pageId);
+        return buttonEl;
     }
 
     function addImageElement(imageUrl, id, pageId, fileName = "Uploaded Image") {
@@ -342,8 +407,51 @@ document.addEventListener("DOMContentLoaded", () => {
         element.innerHTML = `<input class="name" value="${text}" data-id="${id}" /><div class="fas fa-trash-alt"></div>`;
         element.dataset.pageId = pageId;
         elementsList.appendChild(element);
-        element.querySelector(".name").addEventListener("input", (e) => { const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`); if (textEl) textEl.innerText = e.target.value; });
-        element.querySelector(".fa-trash-alt").addEventListener("click", () => { element.remove(); const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`); if (textEl) textEl.remove(); if (selectedElement && selectedElement.dataset.id === id) hideToolbar(); });
+        element.querySelector(".name").addEventListener("input", (e) => {
+            const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
+            if (textEl) textEl.innerText = e.target.value;
+        });
+        element.querySelector(".fa-trash-alt").addEventListener("click", () => {
+            element.remove();
+            const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
+            if (textEl) textEl.remove();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+        });
+    }
+
+    function addButtonToSidebar(text, id, pageId, bgColor = "#ffffff") {
+        const buttonItem = document.createElement("div");
+        buttonItem.className = "element button-item";
+        buttonItem.dataset.id = id;
+        buttonItem.dataset.pageId = pageId;
+        buttonItem.innerHTML = `
+            <input class="name" value="${text}" data-id="${id}" />
+            <input type="color" style="margin-right: 10px;" class="button-color-picker" value="${bgColor}" data-id="${id}" />
+            <div class="fas fa-trash-alt"></div>
+        `;
+        buttonsList.appendChild(buttonItem);
+
+        buttonItem.querySelector(".name").addEventListener("input", (e) => {
+            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            if (buttonEl) buttonEl.innerText = e.target.value;
+        });
+
+        buttonItem.querySelector(".button-color-picker").addEventListener("input", (e) => {
+            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            if (buttonEl) buttonEl.style.backgroundColor = e.target.value;
+        });
+
+        buttonItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+            buttonItem.remove();
+            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            if (buttonEl) buttonEl.remove();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+        });
+
+        buttonItem.addEventListener("click", () => {
+            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            if (buttonEl) selectElement(buttonEl);
+        });
     }
 
     function addImageToSidebar(fileName, imageUrl, id, pageId) {
@@ -366,9 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         imageItem.addEventListener("click", () => {
             const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
-            if (imgEl) {
-                selectElement(imgEl);
-            }
+            if (imgEl) selectElement(imgEl);
         });
     }
 
@@ -413,11 +519,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (sideTextItem) sideTextItem.parentElement.remove();
                 const sideImageItem = imageList.querySelector(`.image-item[data-id="${el.dataset.id}"]`);
                 if (sideImageItem) sideImageItem.remove();
+                const sideButtonItem = buttonsList.querySelector(`.button-item[data-id="${el.dataset.id}"]`);
+                if (sideButtonItem) sideButtonItem.remove();
             });
             const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
             sideItems.forEach((s) => s.remove());
             const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
             sideImageItemsOnPage.forEach(item => item.remove());
+            const sideButtonItemsOnPage = buttonsList.querySelectorAll(`.button-item[data-page-id="${id}"]`);
+            sideButtonItemsOnPage.forEach(item => item.remove());
 
             if (activePageId === id) activePageId = null;
             hideToolbar();
@@ -486,7 +596,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     sideItems.forEach((s) => s.remove());
                     const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
                     sideImageItemsOnPage.forEach(item => item.remove());
-
+                    const sideButtonItemsOnPage = buttonsList.querySelectorAll(`.button-item[data-page-id="${id}"]`);
+                    sideButtonItemsOnPage.forEach(item => item.remove());
                     if (activePageId === id) activePageId = null;
                 });
             }
@@ -517,6 +628,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    confirmBtn.addEventListener("click", () => {
+        if (!activePageId) { alert("Please select a page first!"); return; }
+        const id = `button-${Date.now()}`;
+        const defaultText = "Confirm";
+        const defaultBgColor = "#ffffff";
+        addButtonToSidebar(defaultText, id, activePageId, defaultBgColor);
+        const newButtonEl = addButtonElement(defaultText, id, activePageId);
+        selectElement(newButtonEl);
+    });
+
     textBtn.addEventListener("click", () => {
         textSidebar.style.display = "block";
         imageSidebar.style.display = "none";
@@ -535,6 +656,15 @@ document.addEventListener("DOMContentLoaded", () => {
         backgroundBtn.classList.remove("sideActive");
     });
 
+    backgroundBtn.addEventListener("click", () => {
+        textSidebar.style.display = "none";
+        imageSidebar.style.display = "none";
+        backgroundSidebar.style.display = "block";
+        textBtn.classList.remove("sideActive");
+        imagesBtn.classList.remove("sideActive");
+        backgroundBtn.classList.add("sideActive");
+    });
+
     uploadImageInput.addEventListener("change", (e) => {
         if (!activePageId) { alert("Please select a page to add the image to!"); return; }
         const file = e.target.files[0];
@@ -551,56 +681,33 @@ document.addEventListener("DOMContentLoaded", () => {
         e.target.value = '';
     });
 
-    initializeEditor();
-// --- Lấy các phần tử DOM cho background-sidebar ---
-    const backgroundBtn = document.querySelector(".background-btn");
-    const backgroundSidebar = document.querySelector(".background-sidebar");
-    const mainDiv = document.querySelector(".main");
+    // --- Lấy các phần tử DOM cho background-sidebar ---
     const bgColorPicker = document.getElementById("bgColorPicker");
     const colorPresets = document.querySelector(".color-presets");
     const uploadBgInput = document.getElementById("uploadBgInput");
     const uploadedBackgrounds = document.getElementById("uploadedBackgrounds");
 
-// Lấy thẻ body thay vì main
     const body = document.body;
-// Lấy tất cả các preset colors
     const allPresetColors = document.querySelectorAll(".preset-color");
 
-// Hàm để xóa class 'selected' khỏi tất cả các màu
     function deselectAllPresets() {
         allPresetColors.forEach(preset => preset.classList.remove("selected"));
     }
 
-// --- Chuyển đổi giữa các sidebar ---
-    backgroundBtn.addEventListener("click", () => {
-        textSidebar.style.display = "none";
-        imageSidebar.style.display = "none";
-        backgroundSidebar.style.display = "block";
-        textBtn.classList.remove("sideActive");
-        imagesBtn.classList.remove("sideActive");
-        backgroundBtn.classList.add("sideActive");
-    });
-
-// --- Chức năng đổi màu background bằng bảng màu ---
     if (bgColorPicker) {
         bgColorPicker.addEventListener("input", (e) => {
             body.style.backgroundColor = e.target.value;
             body.style.backgroundImage = 'none';
-
-            // Bỏ chọn tất cả các màu preset
             deselectAllPresets();
         });
     }
 
-// --- Chức năng chọn màu background có sẵn ---
     if (colorPresets) {
         colorPresets.addEventListener("click", (e) => {
             if (e.target.classList.contains("preset-color")) {
                 const color = e.target.style.backgroundColor;
                 body.style.backgroundColor = color;
                 body.style.backgroundImage = 'none';
-
-                // Cập nhật bảng màu và lớp 'selected'
                 if (bgColorPicker) {
                     bgColorPicker.value = rgbToHex(color);
                 }
@@ -610,15 +717,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-// --- Chức năng upload ảnh/video làm background ---
     if (uploadBgInput) {
         uploadBgInput.addEventListener("change", (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             const url = URL.createObjectURL(file);
-
-            // Thêm thumbnail vào sidebar
             const thumbnailDiv = document.createElement("div");
             thumbnailDiv.className = "uploaded-bg-item";
             thumbnailDiv.dataset.url = url;
@@ -629,25 +733,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 thumbnailDiv.innerHTML = `<video src="${url}" autoplay muted loop></video>`;
             }
 
-            // Tạo nút xóa
             const deleteBtn = document.createElement("div");
             deleteBtn.className = "uploaded-bg-delete-btn";
             deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i>`;
-
-            // Thêm nút xóa vào thumbnail
             thumbnailDiv.appendChild(deleteBtn);
 
             if (uploadedBackgrounds) {
                 uploadedBackgrounds.appendChild(thumbnailDiv);
             }
 
-            // Bỏ chọn tất cả các màu preset
             deselectAllPresets();
-
-            // Áp dụng background
             body.style.backgroundColor = 'transparent';
             const currentVideo = body.querySelector('video');
-            if(currentVideo) {
+            if (currentVideo) {
                 body.removeChild(currentVideo);
             }
             if (file.type.startsWith("image/")) {
@@ -672,13 +770,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 body.style.backgroundImage = 'none';
             }
 
-            // Sự kiện click để chọn lại background đã upload
             thumbnailDiv.addEventListener("click", (e) => {
-                // Ngăn sự kiện click lan ra nút xóa
                 if (e.target.closest('.uploaded-bg-delete-btn')) return;
-
                 const currentVideo = body.querySelector('video');
-                if(currentVideo) {
+                if (currentVideo) {
                     body.removeChild(currentVideo);
                 }
                 if (file.type.startsWith("image/")) {
@@ -701,15 +796,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
-            // Sự kiện click để xóa background
             deleteBtn.addEventListener("click", () => {
                 thumbnailDiv.remove();
-
-                // Nếu background đang được áp dụng là background này, hãy xóa nó
                 if (body.style.backgroundImage.includes(url)) {
                     body.style.backgroundImage = 'none';
-                    body.style.backgroundColor = '#fbf6f2'; // Trở về màu mặc định
-
+                    body.style.backgroundColor = '#fbf6f2';
                 }
                 const videoToRemove = body.querySelector(`video[src="${url}"]`);
                 if (videoToRemove) {
@@ -719,11 +810,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-// Chọn màu mặc định khi tải trang
     const defaultColorPreset = document.querySelector('.preset-color[style*="#fbf6f2"]');
     if (defaultColorPreset) {
         defaultColorPreset.classList.add("selected");
     }
 
-
+    initializeEditor();
 });

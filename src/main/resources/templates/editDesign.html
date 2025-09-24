@@ -76,6 +76,12 @@
                     <div class="fas fa-trash-alt"></div>
                 </div>
             </div>
+
+            <button class="confirm-btn">+ Add Confirm Button</button>
+            <div class="quality">Buttons Elements</div>
+            <div class="buttons" id="buttonList">
+
+            </div>
         </div>
 
         <div class="background-sidebar" style="display: none;">
@@ -109,6 +115,10 @@
             <input type="file" id="uploadImageInput" accept="image/*,video/*" style="display: none;" />
             <div class="quality">Uploaded Images</div>
             <div class="elements" id="imageList"></div>
+
+            <div class="map-sidebar">Generate address</div>
+            <div class="quality"></div>
+            <div class="elements" id="mapList"></div>
         </div>
 
     </aside>
@@ -124,20 +134,7 @@
     </main>
 </div>
 
-<div id="textToolbar" class="toolbar" style="display:none; position:absolute; top:10px; left:50%; transform:translateX(-50%); background:#fff; border:1px solid #ccc; padding:5px; border-radius:6px;">
-    <select id="tbFont">
-        <option value="Arial">Arial</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Verdana">Verdana</option>
-    </select>
-    <input id="tbSize" type="number" min="6" max="100" value="16" style="width:50px" />
-    <button id="tbBold"><b>B</b></button>
-    <button id="tbItalic"><i>I</i></button>
-    <button id="tbUnderline"><u>U</u></button>
-    <input id="tbColor" type="color" />
-</div>
-
 <script src="/js/editDesign.js"></script>
+<script src="/js/preview.js"></script>
 </body>
 </html>

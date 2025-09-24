@@ -160,7 +160,7 @@ body {
     font-weight: 600;
 }
 
-.add-btn, .add-div {
+.add-btn, .add-div, .confirm-btn {
     display: block;
     margin: 12px 0 18px 0;
     background: rgba(168, 142, 79, 1);
@@ -177,7 +177,7 @@ body {
     transition: transform 0.2s;
 }
 
-.add-btn:hover, .add-div:hover {
+.add-btn:hover, .add-div:hover, .confirm-btn:hover {
     transform: translateY(-1px);
 }
 
@@ -187,7 +187,7 @@ body {
     color: #a88e4f;
 }
 
-.elements, .pages {
+.elements, .pages, .buttons {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -375,7 +375,6 @@ body {
     padding: 36px 28px;
     border-radius: 12px;
     text-align: center;
-    box-shadow: 0 22px 30px rgba(0,0,0,0.12), 0 6px 8px rgba(0,0,0,0.06);
     position: relative;
     overflow: hidden;
     z-index: 10;
@@ -446,6 +445,22 @@ body {
     background-repeat: no-repeat;
     cursor: move;
     z-index: 1000;
+}
+
+.draggable-button {
+    position: absolute;
+    min-width: 60px;
+    min-height: 30px;
+    padding: 8px 16px;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+.selected-button-outline {
+    outline: 2px solid #6b5136;
+    outline-offset: 4px;
 }
 
 /* ========================= */
