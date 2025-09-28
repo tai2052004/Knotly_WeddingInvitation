@@ -371,7 +371,7 @@ body {
 .card {
     width: 400px;
     height: 400px;
-    background-color: #e2d0b8;
+    background-color: #ffffff;
     padding: 36px 28px;
     border-radius: 12px;
     text-align: center;
@@ -612,4 +612,20 @@ body {
         max-width: 400px;
         height: auto;
     }
+}
+
+.pac-container {
+    z-index: 2200 !important;
+    position: fixed !important;
+}
+
+#miniMapWrap.selected {
+    border: 2px solid #444 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+#miniMapWrap .custom-resize-handle {
+    display: none;
+}
+#miniMapWrap.selected .custom-resize-handle {
+    display: block;
 }
