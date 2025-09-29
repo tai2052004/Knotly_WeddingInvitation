@@ -1,13 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
     // --- Lấy các phần tử DOM chính ---
-    const addTextBtn = document.querySelector(".add-btn");
+    const addTextBtn = document.getElementById("addTextBtn");
     const addPageBtn = document.getElementById("addPagebtn");
     const confirmBtn = document.querySelector(".confirm-btn");
-    const elementsList = document.querySelector(".elements");
+    const elementsList = document.getElementById("elementsList");
     const pagesList = document.getElementById("pagesList");
     const buttonsList = document.getElementById("buttonList");
     const canvas = document.querySelector(".canvas");
-    const card = document.getElementById("card");
+
+    // ### FIX: Thiết lập đầy đủ style cho canvas ngay từ đầu ###
+    if (canvas) {
+        canvas.style.position = "relative";
+        canvas.style.overflow = "visible"; // Dòng code quan trọng được thêm vào
+    }
+
+    let card = document.getElementById("card");
 
     // --- DOM cho quản lý sidebar và ảnh ---
     const textSidebar = document.querySelector(".text-sidebar");
@@ -23,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedElement = null;
     let activePageId = null;
 
-    // --- toolbar: tìm hoặc tạo nếu chưa tồn tại ---
+    // --- Toolbar cho TEXT ---
     let toolbar = document.getElementById("floatingToolbar");
     if (!toolbar) {
         toolbar = document.createElement("div");
@@ -55,6 +62,32 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(toolbar);
     }
 
+    // --- Toolbar cho CARD ---
+    let cardToolbar = document.getElementById("cardToolbar");
+    if (!cardToolbar) {
+        cardToolbar = document.createElement("div");
+        cardToolbar.id = "cardToolbar";
+        cardToolbar.className = "floating-toolbar";
+        cardToolbar.style.position = "absolute";
+        cardToolbar.style.display = "none";
+        cardToolbar.style.background = "white";
+        cardToolbar.style.border = "1px solid #ccc";
+        cardToolbar.style.borderRadius = "6px";
+        cardToolbar.style.boxShadow = "0 2px 6px rgba(0,0,0,0.12)";
+        cardToolbar.style.padding = "6px";
+        cardToolbar.style.gap = "6px";
+        cardToolbar.style.zIndex = "3000";
+        cardToolbar.innerHTML = `
+            <label style="font-size:12px;">W:</label>
+            <input id="ctb-width" type="number" min="100" max="2000" value="400" style="width:65px" title="Width" />
+            <label style="font-size:12px;">H:</label>
+            <input id="ctb-height" type="number" min="100" max="2000" value="600" style="width:65px" title="Height" />
+            <label style="font-size:12px;">Color:</label>
+            <input id="ctb-color" type="color" title="Background Color" />
+        `;
+        document.body.appendChild(cardToolbar);
+    }
+
     const tbFont = toolbar.querySelector("#tb-fontFamily");
     const tbSize = toolbar.querySelector("#tb-fontSize");
     const tbColor = toolbar.querySelector("#tb-color");
@@ -62,8 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const tbItalic = toolbar.querySelector("#tb-italic");
     const tbUnderline = toolbar.querySelector("#tb-underline");
 
+    const ctbWidth = cardToolbar.querySelector("#ctb-width");
+    const ctbHeight = cardToolbar.querySelector("#ctb-height");
+    const ctbColor = cardToolbar.querySelector("#ctb-color");
+
+
     function rgbToHex(rgb) {
-        if (!rgb) return "#000000";
+        if (!rgb || rgb === 'transparent') return "#ffffff";
         const m = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
         if (!m) return rgb;
         return "#" + [1, 2, 3].map(i => parseInt(m[i]).toString(16).padStart(2, "0")).join("");
@@ -72,67 +110,88 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateToolbarUI(el) {
         if (!el || (!el.classList.contains("draggable-text") && !el.classList.contains("draggable-button"))) return;
         const cs = window.getComputedStyle(el);
-        const fontFamily = cs.fontFamily || "";
-        const fontSize = parseInt(cs.fontSize) || 16;
-        const color = cs.color || "#000";
-        const fontWeight = cs.fontWeight;
-        const fontStyle = cs.fontStyle;
-        const textDecoration = cs.textDecorationLine || cs.textDecoration || "";
-        tbFont.value = fontFamily;
-        tbSize.value = fontSize;
-        tbColor.value = rgbToHex(color);
-        tbBold.dataset.active = (fontWeight === "700" || fontWeight === "bold") ? "1" : "0";
-        tbItalic.dataset.active = (fontStyle === "italic") ? "1" : "0";
-        tbUnderline.dataset.active = (textDecoration.indexOf("underline") !== -1) ? "1" : "0";
-        tbBold.style.background = tbBold.dataset.active === "1" ? "#eee" : "transparent";
-        tbItalic.style.background = tbItalic.dataset.active === "1" ? "#eee" : "transparent";
-        tbUnderline.style.background = tbUnderline.dataset.active === "1" ? "#eee" : "transparent";
+        tbFont.value = cs.fontFamily || "";
+        tbSize.value = parseInt(cs.fontSize) || 16;
+        tbColor.value = rgbToHex(cs.color);
+        tbBold.style.background = (cs.fontWeight === "700" || cs.fontWeight === "bold") ? "#eee" : "transparent";
+        tbItalic.style.background = (cs.fontStyle === "italic") ? "#eee" : "transparent";
+        tbUnderline.style.background = ((cs.textDecorationLine || cs.textDecoration).indexOf("underline") !== -1) ? "#eee" : "transparent";
+    }
+
+    function updateCardToolbarUI(el) {
+        if (!el || !el.classList.contains("card")) return;
+        const cs = window.getComputedStyle(el);
+        ctbWidth.value = parseInt(cs.width);
+        ctbHeight.value = parseInt(cs.height);
+        ctbColor.value = rgbToHex(cs.backgroundColor);
     }
 
     function updateToolbarPosition(el) {
-        if (!el || (!el.classList.contains("draggable-text") && !el.classList.contains("draggable-button"))) return;
+        if (!el) return;
+        let targetToolbar;
+        if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
+            targetToolbar = toolbar;
+        } else if (el.classList.contains("card")) {
+            targetToolbar = cardToolbar;
+        } else {
+            return;
+        }
+
         const rect = el.getBoundingClientRect();
-        const tbRect = toolbar.getBoundingClientRect();
+        const tbRect = targetToolbar.getBoundingClientRect();
         const top = rect.top + window.scrollY - tbRect.height - 8;
         const left = rect.left + window.scrollX;
-        toolbar.style.top = `${Math.max(6, top)}px`;
-        toolbar.style.left = `${Math.max(6, left)}px`;
+        targetToolbar.style.top = `${Math.max(6, top)}px`;
+        targetToolbar.style.left = `${Math.max(6, left)}px`;
     }
 
     function selectElement(el) {
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
-            selectedElement.classList.remove("selected-button-outline");
+            if (selectedElement.classList.contains("card")) {
+                selectedElement.style.boxShadow = "";
+            }
             const oldHandle = selectedElement.querySelector(".resize-handle");
             if (oldHandle) oldHandle.style.display = "none";
         }
         selectedElement = el;
         if (selectedElement) {
-            const currentHandle = selectedElement.querySelector(".resize-handle");
-            if (currentHandle) currentHandle.style.display = "block";
-
             if (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")) {
                 selectedElement.classList.add("selected-element-outline");
+                const currentHandle = selectedElement.querySelector(".resize-handle");
+                if (currentHandle) currentHandle.style.display = "block";
+                cardToolbar.style.display = "none";
                 toolbar.style.display = "flex";
                 updateToolbarUI(selectedElement);
-                updateToolbarPosition(selectedElement);
             } else if (selectedElement.classList.contains("draggable-image")) {
                 selectedElement.classList.add("selected-image-outline");
+                const currentHandle = selectedElement.querySelector(".resize-handle");
+                if (currentHandle) currentHandle.style.display = "block";
                 toolbar.style.display = "none";
+                cardToolbar.style.display = "none";
+            } else if (selectedElement.classList.contains("card")) {
+                selectedElement.style.boxShadow = "0 0 0 2px #4A90E2";
+                toolbar.style.display = "none";
+                cardToolbar.style.display = "flex";
+                updateCardToolbarUI(selectedElement);
             }
+            updateToolbarPosition(selectedElement);
         }
     }
 
-    function hideToolbar() {
+    function hideToolbars() {
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
-            selectedElement.classList.remove("selected-button-outline");
+            if (selectedElement.classList.contains("card")) {
+                selectedElement.style.boxShadow = "";
+            }
             const handle = selectedElement.querySelector(".resize-handle");
             if (handle) handle.style.display = "none";
         }
         toolbar.style.display = "none";
+        cardToolbar.style.display = "none";
         selectedElement = null;
     }
 
@@ -167,6 +226,22 @@ document.addEventListener("DOMContentLoaded", () => {
         updateToolbarUI(selectedElement);
     });
 
+    ctbWidth.addEventListener("input", (e) => {
+        if (selectedElement && selectedElement.classList.contains("card")) {
+            selectedElement.style.width = e.target.value + "px";
+        }
+    });
+    ctbHeight.addEventListener("input", (e) => {
+        if (selectedElement && selectedElement.classList.contains("card")) {
+            selectedElement.style.height = e.target.value + "px";
+        }
+    });
+    ctbColor.addEventListener("input", (e) => {
+        if (selectedElement && selectedElement.classList.contains("card")) {
+            selectedElement.style.backgroundColor = e.target.value;
+        }
+    });
+
     let resizingEl = null; let resizeStartX = 0; let resizeStartY = 0; let resizeStartW = 0; let resizeStartH = 0;
     document.addEventListener("mousemove", (e) => {
         if (resizingEl) {
@@ -176,8 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const newH = Math.max(20, resizeStartH + dy);
             resizingEl.style.width = newW + "px";
             resizingEl.style.height = newH + "px";
-            if (selectedElement === resizingEl && (resizingEl.classList.contains('draggable-text') || resizingEl.classList.contains('draggable-button')))
-                updateToolbarPosition(resizingEl);
+            updateToolbarPosition(resizingEl);
         }
     });
     document.addEventListener("mouseup", () => {
@@ -209,20 +283,9 @@ document.addEventListener("DOMContentLoaded", () => {
             y = Math.max(0, Math.min(y, canvas.clientHeight - el.offsetHeight));
             el.style.left = `${x}px`;
             el.style.top = `${y}px`;
-            if (selectedElement === el && (el.classList.contains('draggable-text') || el.classList.contains('draggable-button')))
-                updateToolbarPosition(el);
+            updateToolbarPosition(el);
         });
         document.addEventListener("mouseup", () => {
-            if (isDown) {
-                const pages = canvas.querySelectorAll(".card");
-                pages.forEach((p) => {
-                    const rect = p.getBoundingClientRect();
-                    const elRect = el.getBoundingClientRect();
-                    if (elRect.left >= rect.left && elRect.right <= rect.right && elRect.top >= rect.top && elRect.bottom <= rect.bottom) {
-                        el.dataset.pageId = p.dataset.id;
-                    }
-                });
-            }
             isDown = false;
             el.style.zIndex = 1000;
         });
@@ -233,13 +296,13 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             selectElement(el);
         });
-
         el.addEventListener("dblclick", (e) => {
             e.stopPropagation();
             if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
                 el.contentEditable = "true";
                 el.focus();
                 toolbar.style.display = "none";
+                cardToolbar.style.display = "none";
             }
             selectElement(el);
         });
@@ -255,43 +318,28 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sideImageItem) sideImageItem.remove();
             const sideButtonItem = buttonsList.querySelector(`.button-item[data-id="${id}"]`);
             if (sideButtonItem) sideButtonItem.remove();
-            hideToolbar();
+            hideToolbars();
         }
     });
 
     document.addEventListener("mousedown", (e) => {
-        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button");
-        const insideToolbar = !!e.target.closest("#floatingToolbar");
+        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button, .card");
+        const insideToolbar = !!e.target.closest("#floatingToolbar, #cardToolbar");
         if (!insideElement && !insideToolbar) {
-            hideToolbar();
+            hideToolbars();
         }
     });
 
     function createResizeHandleFor(el) {
         if (!el.style.width) el.style.width = Math.max(100, el.offsetWidth) + "px";
         if (!el.style.height) el.style.height = Math.max(50, el.offsetHeight) + "px";
-
         let resizeHandle = el.querySelector(".resize-handle");
         if (!resizeHandle) {
             resizeHandle = document.createElement("div");
             resizeHandle.className = "resize-handle";
             el.appendChild(resizeHandle);
         }
-
-        resizeHandle.style.position = "absolute";
-        resizeHandle.style.bottom = "0px";
-        resizeHandle.style.right = "0px";
-        resizeHandle.style.width = "16px";
-        resizeHandle.style.height = "16px";
-        resizeHandle.style.background = "linear-gradient(to top left, #fff 50%, #eee 50%)";
-        resizeHandle.style.border = "1px solid #666";
-        resizeHandle.style.borderTopLeftRadius = "3px";
-        resizeHandle.style.cursor = "nwse-resize";
-        resizeHandle.style.zIndex = "2001";
-        resizeHandle.style.display = "none";
-        resizeHandle.style.opacity = "0.8";
-        resizeHandle.style.clipPath = "polygon(0% 100%, 100% 100%, 100% 0%)";
-
+        resizeHandle.style.cssText = "position: absolute; bottom: 0px; right: 0px; width: 16px; height: 16px; background: linear-gradient(to top left, #fff 50%, #eee 50%); border: 1px solid #666; cursor: nwse-resize; z-index: 2001; display: none; opacity: 0.8; clip-path: polygon(0% 100%, 100% 100%, 100% 0%);";
         resizeHandle.addEventListener("mousedown", (e) => {
             if (e.button !== 0) return;
             e.stopPropagation();
@@ -311,18 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
         el.style.cursor = "move";
         el.style.zIndex = "1000";
         canvas.appendChild(el);
-
         if (!keepPosition) {
-            const pageEl = canvas.querySelector(`.card[data-id="${pageId}"]`);
-            if (pageEl) {
-                const pageRect = pageEl.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
-                el.style.left = `${pageRect.left - canvasRect.left + 50}px`;
-                el.style.top = `${pageRect.top - canvasRect.top + 50}px`;
-            } else {
-                el.style.left = "50px";
-                el.style.top = "50px";
-            }
+            el.style.left = "50px";
+            el.style.top = "50px";
         }
         createResizeHandleFor(el);
         makeDraggable(el);
@@ -333,14 +372,11 @@ document.addEventListener("DOMContentLoaded", () => {
         textEl.classList.add("draggable-text");
         textEl.contentEditable = "false";
         initCanvasElement(textEl, id, pageId, keepPosition);
-
         textEl.addEventListener("blur", () => {
             textEl.contentEditable = "false";
             const input = elementsList.querySelector(`input[data-id="${id}"]`);
             if (input) input.value = textEl.innerText;
-            if (selectedElement === textEl) {
-                selectElement(textEl);
-            }
+            if (selectedElement === textEl) selectElement(textEl);
         });
         textEl.addEventListener("mousedown", (e) => {
             if (textEl.isContentEditable || textEl.contentEditable === "true") {
@@ -357,14 +393,11 @@ document.addEventListener("DOMContentLoaded", () => {
         buttonEl.style.borderRadius = "4px";
         buttonEl.style.backgroundColor = "#ffffff";
         initCanvasElement(buttonEl, id, pageId, keepPosition);
-
         buttonEl.addEventListener("blur", () => {
             buttonEl.contentEditable = "false";
             const input = buttonsList.querySelector(`input[data-id="${id}"]`);
             if (input) input.value = buttonEl.innerText;
-            if (selectedElement === buttonEl) {
-                selectElement(buttonEl);
-            }
+            if (selectedElement === buttonEl) selectElement(buttonEl);
         });
         buttonEl.addEventListener("mousedown", (e) => {
             if (buttonEl.isContentEditable || buttonEl.contentEditable === "true") {
@@ -415,7 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
             element.remove();
             const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
             if (textEl) textEl.remove();
-            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
         });
     }
 
@@ -430,24 +463,20 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="fas fa-trash-alt"></div>
         `;
         buttonsList.appendChild(buttonItem);
-
         buttonItem.querySelector(".name").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
             if (buttonEl) buttonEl.innerText = e.target.value;
         });
-
         buttonItem.querySelector(".button-color-picker").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
             if (buttonEl) buttonEl.style.backgroundColor = e.target.value;
         });
-
         buttonItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
             buttonItem.remove();
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
             if (buttonEl) buttonEl.remove();
-            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
         });
-
         buttonItem.addEventListener("click", () => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
             if (buttonEl) selectElement(buttonEl);
@@ -465,12 +494,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="fas fa-trash-alt"></div>
         `;
         imageList.appendChild(imageItem);
-
         imageItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
             imageItem.remove();
             const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
             if (imgEl) imgEl.remove();
-            if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
         });
         imageItem.addEventListener("click", () => {
             const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
@@ -482,12 +510,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const newCard = document.createElement("div");
         newCard.className = "card";
         newCard.dataset.id = id;
-        newCard.style.zIndex = "-1000";
         newCard.style.position = "relative";
+        newCard.style.zIndex = "0";
         canvas.appendChild(newCard);
-        const pageTitleId = `title-${id}`;
-        addTextToSidebar(name, pageTitleId, id);
-        addTextElement(name, pageTitleId, id);
+        newCard.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectElement(newCard);
+        });
     }
 
     function attachPageClick(pageListItem, id) {
@@ -496,7 +525,11 @@ document.addEventListener("DOMContentLoaded", () => {
             allPages.forEach((p) => (p.style.border = "none"));
             pageListItem.style.border = "2px solid white";
             activePageId = id;
-            hideToolbar();
+            hideToolbars();
+            const targetCard = canvas.querySelector(`.card[data-id="${id}"]`);
+            if (targetCard) {
+                selectElement(targetCard);
+            }
         });
     }
 
@@ -515,27 +548,28 @@ document.addEventListener("DOMContentLoaded", () => {
             const elementsOnPage = canvas.querySelectorAll(`[data-page-id="${id}"]`);
             elementsOnPage.forEach((el) => {
                 el.remove();
-                const sideTextItem = elementsList.querySelector(`.element input[data-id="${el.dataset.id}"]`);
-                if (sideTextItem) sideTextItem.parentElement.remove();
-                const sideImageItem = imageList.querySelector(`.image-item[data-id="${el.dataset.id}"]`);
-                if (sideImageItem) sideImageItem.remove();
-                const sideButtonItem = buttonsList.querySelector(`.button-item[data-id="${el.dataset.id}"]`);
-                if (sideButtonItem) sideButtonItem.remove();
+                const sideTextItem = elementsList.querySelector(`input[data-id="${el.dataset.id}"]`);
+                if(sideTextItem) sideTextItem.parentElement.remove();
             });
-            const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
-            sideItems.forEach((s) => s.remove());
-            const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
-            sideImageItemsOnPage.forEach(item => item.remove());
-            const sideButtonItemsOnPage = buttonsList.querySelectorAll(`.button-item[data-page-id="${id}"]`);
-            sideButtonItemsOnPage.forEach(item => item.remove());
-
             if (activePageId === id) activePageId = null;
-            hideToolbar();
+            hideToolbars();
         });
     }
 
     function initializeEditor() {
+        card = document.getElementById("card");
         if (!card) return;
+
+        card.style.position = "relative";
+        card.style.zIndex = "0";
+
+        card.addEventListener("click", (e) => {
+            if (e.target === card) {
+                e.stopPropagation();
+                selectElement(card);
+            }
+        });
+
         const initialSidebarTexts = elementsList.querySelectorAll(".element");
         const initialCardTexts = card.querySelectorAll("h3, h1, p");
         initialSidebarTexts.forEach((sidebarItem, index) => {
@@ -552,7 +586,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     inputElement.value = existingNameDiv.innerText;
                     inputElement.dataset.id = id;
                     sidebarItem.replaceChild(inputElement, existingNameDiv);
-
                     inputElement.addEventListener("input", (e) => {
                         const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
                         if (textEl) textEl.innerText = e.target.value;
@@ -560,47 +593,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 textOnCard.dataset.id = id;
                 textOnCard.dataset.pageId = pageId;
+
                 const cardRect = card.getBoundingClientRect();
-                const cardWidth = cardRect.width;
-                const cardHeight = cardRect.height;
-                textOnCard.style.left = `${cardWidth * 0.3}px`;
-                let newTop;
-                if (index === 0) newTop = cardHeight * 0.2;
-                else if (index === 1) { newTop = cardHeight * 0.4; textOnCard.style.left = `${cardWidth * 0.35}px`; }
-                else { newTop = cardHeight * 0.65; textOnCard.style.left = `${cardWidth * 0.35}px`; }
-                textOnCard.style.top = `${newTop}px`;
-                if (index === 0) { textOnCard.style.fontSize = "1.7em"; textOnCard.style.fontWeight = "bold"; }
-                else if (index === 1) { textOnCard.style.fontSize = "2.5em"; textOnCard.style.fontWeight = "bold"; }
-                else { textOnCard.style.fontSize = "1.2em"; textOnCard.style.fontWeight = "normal"; }
+                textOnCard.style.left = `${cardRect.width * 0.3}px`;
+                textOnCard.style.top = `${cardRect.height * (0.2 + index * 0.2)}px`;
+
                 initTextElement(textOnCard, id, pageId, true);
                 sidebarItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
                     sidebarItem.remove();
                     textOnCard.remove();
-                    if (selectedElement && selectedElement.dataset.id === id) hideToolbar();
+                    if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
                 });
             }
         });
         const initialPage = pagesList.querySelector(".page");
         if (initialPage && card) {
             const id = "initial-page-0";
-            initialPage.dataset.id = id; card.dataset.id = id; card.style.zIndex = "-1000";
+            initialPage.dataset.id = id;
+            card.dataset.id = id;
             attachPageClick(initialPage, id);
-            activePageId = id; initialPage.style.border = "2px solid white";
-            const trashIcon = initialPage.querySelector(".fa-trash-alt");
-            if (trashIcon) {
-                trashIcon.addEventListener("click", (e) => {
-                    e.stopPropagation(); initialPage.remove(); card.remove();
-                    const elementsOnPage = canvas.querySelectorAll(`[data-page-id="${id}"]`);
-                    elementsOnPage.forEach((el) => el.remove());
-                    const sideItems = elementsList.querySelectorAll(`.element[data-page-id="${id}"]`);
-                    sideItems.forEach((s) => s.remove());
-                    const sideImageItemsOnPage = imageList.querySelectorAll(`.image-item[data-page-id="${id}"]`);
-                    sideImageItemsOnPage.forEach(item => item.remove());
-                    const sideButtonItemsOnPage = buttonsList.querySelectorAll(`.button-item[data-page-id="${id}"]`);
-                    sideButtonItemsOnPage.forEach(item => item.remove());
-                    if (activePageId === id) activePageId = null;
-                });
-            }
+            activePageId = id;
+            initialPage.style.border = "2px solid white";
         }
         pageCounter = pagesList.querySelectorAll(".page").length;
     }
@@ -625,6 +638,8 @@ document.addEventListener("DOMContentLoaded", () => {
             allPages.forEach((p) => (p.style.border = "none"));
             newPageEl.style.border = "2px solid white";
             activePageId = id;
+            const newCard = canvas.querySelector(`.card[data-id="${id}"]`);
+            if(newCard) selectElement(newCard);
         }
     });
 
@@ -681,12 +696,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.target.value = '';
     });
 
-    // --- Lấy các phần tử DOM cho background-sidebar ---
     const bgColorPicker = document.getElementById("bgColorPicker");
     const colorPresets = document.querySelector(".color-presets");
     const uploadBgInput = document.getElementById("uploadBgInput");
     const uploadedBackgrounds = document.getElementById("uploadedBackgrounds");
-
     const body = document.body;
     const allPresetColors = document.querySelectorAll(".preset-color");
 

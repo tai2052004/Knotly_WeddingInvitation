@@ -33,7 +33,9 @@
         <button class="scratch-btn">+ Create From Scratch</button>
     </div>
 </section>
-
+<form id="myForm" action="/completeTemplate" method="GET">
+    <input type="hidden" name="template_id" id="template_id" value="">
+</form>
 <!-- Featured Templates -->
 <section class="template-section">
     <h3 class="section-title">⭐ Featured Templates</h3>
@@ -131,10 +133,14 @@
     </div>
 
     <!-- Template Grid -->
-    <div class="template-grid">
+    <div class="template-grid" th:each="template : ${templateList}">
         <div class="template-card">
-            <div class="template-image">
-                <span class="image-placeholder">[Template Image]</span>
+            <div class="template-image"
+                 th:style="'background-image: url(' + ${template.htmlImage} + ');' +
+                        ' background-size: cover; '+
+                        ' background-position: center; ' +
+                        ' background-repeat: no-repeat;'">
+                <span class="image-placeholder"></span>
             </div>
             <div class="template-info">
                 <h4 class="template-title">Classic Rose</h4>
@@ -143,7 +149,7 @@
                     <span class="tag">romantic</span>
                     <span class="tag">floral</span>
                 </div>
-                <button class="choose-btn">Choose This Template →</button>
+                <button th:id="${template.templateId}" class="choose-btn">Choose This Template →</button>
             </div>
         </div>
         <div class="template-card">
@@ -221,5 +227,20 @@
         </div>
     </div>
 </section>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const buttons = document.querySelectorAll(".choose-btn");
+        const hiddenInput = document.getElementById("template_id");
+        const form = document.getElementById("myForm");
+
+        buttons.forEach(btn => {
+            btn.addEventListener("click", function (e) {
+                e.preventDefault(); // tránh reload trang ngay
+                hiddenInput.value = this.id;
+                form.submit(); // gửi form đến /getPractice
+            });
+        });
+    });
+</script>
 </body>
 </html>

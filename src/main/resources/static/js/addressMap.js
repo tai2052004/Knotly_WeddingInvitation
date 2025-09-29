@@ -2,6 +2,152 @@
 
 let mapModal, mapOverlay, mapInput, mapConfirm, mapCancel, miniMap, miniMapMarker, addressTextEl, miniMapWrap;
 let currentLatLng, currentAddress;
+let selectedElement = null; // Biến theo dõi phần tử đang được chọn
+let toolbar = null; // Biến cho toolbar
+
+// --- Bắt đầu: Code được sao chép và chỉnh sửa từ editDesign.js ---
+
+// Hàm chuyển đổi màu RGB sang HEX
+function rgbToHex(rgb) {
+    if (!rgb) return "#000000";
+    const m = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!m) return rgb;
+    return "#" + [1, 2, 3].map(i => parseInt(m[i]).toString(16).padStart(2, "0")).join("");
+}
+
+// Tạo và khởi tạo toolbar
+function ensureToolbar() {
+    if (toolbar) return;
+
+    toolbar = document.createElement("div");
+    toolbar.id = "floatingToolbar";
+    toolbar.className = "floating-toolbar";
+    toolbar.style.position = "absolute";
+    toolbar.style.display = "none";
+    toolbar.style.background = "white";
+    toolbar.style.border = "1px solid #ccc";
+    toolbar.style.borderRadius = "6px";
+    toolbar.style.boxShadow = "0 2px 6px rgba(0,0,0,0.12)";
+    toolbar.style.padding = "6px";
+    toolbar.style.gap = "6px";
+    toolbar.style.zIndex = "3000";
+    toolbar.innerHTML = `
+        <select id="tb-fontFamily" title="Font">
+            <option value="">(font)</option>
+            <option value="Muli, Arial, sans-serif">Muli</option>
+            <option value="Arial, Helvetica, sans-serif">Arial</option>
+            <option value="Times New Roman, Times, serif">Times</option>
+            <option value="Georgia, serif">Georgia</option>
+        </select>
+        <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
+        <input id="tb-color" type="color" title="Color" />
+        <button id="tb-bold" title="Bold"><b>B</b></button>
+        <button id="tb-italic" title="Italic"><i>I</i></button>
+        <button id="tb-underline" title="Underline"><u>U</u></button>
+    `;
+    document.body.appendChild(toolbar);
+
+    // Gán sự kiện cho các nút trên toolbar
+    toolbar.querySelector("#tb-fontFamily").addEventListener("change", (e) => {
+        if (selectedElement === addressTextEl) selectedElement.style.fontFamily = e.target.value || "";
+    });
+    toolbar.querySelector("#tb-fontSize").addEventListener("input", (e) => {
+        if (selectedElement === addressTextEl) selectedElement.style.fontSize = e.target.value + "px";
+    });
+    toolbar.querySelector("#tb-color").addEventListener("input", (e) => {
+        if (selectedElement === addressTextEl) selectedElement.style.color = e.target.value;
+    });
+    toolbar.querySelector("#tb-bold").addEventListener("click", () => {
+        if (selectedElement !== addressTextEl) return;
+        const cur = window.getComputedStyle(selectedElement).fontWeight;
+        selectedElement.style.fontWeight = (cur === "700" || cur === "bold") ? "normal" : "bold";
+        updateToolbarUI(selectedElement);
+    });
+    toolbar.querySelector("#tb-italic").addEventListener("click", () => {
+        if (selectedElement !== addressTextEl) return;
+        const cur = window.getComputedStyle(selectedElement).fontStyle;
+        selectedElement.style.fontStyle = (cur === "italic") ? "normal" : "italic";
+        updateToolbarUI(selectedElement);
+    });
+    toolbar.querySelector("#tb-underline").addEventListener("click", () => {
+        if (selectedElement !== addressTextEl) return;
+        const cur = window.getComputedStyle(selectedElement).textDecorationLine || "";
+        selectedElement.style.textDecoration = (cur.indexOf("underline") !== -1) ? "none" : "underline";
+        updateToolbarUI(selectedElement);
+    });
+}
+
+// Cập nhật giao diện toolbar dựa trên phần tử được chọn
+function updateToolbarUI(el) {
+    if (!el || el.id !== 'miniMapAddress') return;
+    const cs = window.getComputedStyle(el);
+    const tbFont = toolbar.querySelector("#tb-fontFamily");
+    const tbSize = toolbar.querySelector("#tb-fontSize");
+    const tbColor = toolbar.querySelector("#tb-color");
+    const tbBold = toolbar.querySelector("#tb-bold");
+    const tbItalic = toolbar.querySelector("#tb-italic");
+    const tbUnderline = toolbar.querySelector("#tb-underline");
+
+    tbFont.value = cs.fontFamily || "";
+    tbSize.value = parseInt(cs.fontSize) || 16;
+    tbColor.value = rgbToHex(cs.color);
+    tbBold.style.background = (cs.fontWeight === "700" || cs.fontWeight === "bold") ? "#eee" : "transparent";
+    tbItalic.style.background = (cs.fontStyle === "italic") ? "#eee" : "transparent";
+    tbUnderline.style.background = (cs.textDecorationLine.indexOf("underline") !== -1) ? "#eee" : "transparent";
+}
+
+// Cập nhật vị trí toolbar
+function updateToolbarPosition(el) {
+    if (!el || !toolbar) return;
+    const rect = el.getBoundingClientRect();
+    const tbRect = toolbar.getBoundingClientRect();
+    const top = rect.top + window.scrollY - tbRect.height - 8;
+    const left = rect.left + window.scrollX;
+    toolbar.style.top = `${Math.max(6, top)}px`;
+    toolbar.style.left = `${Math.max(6, left)}px`;
+}
+
+// Ẩn toolbar và bỏ chọn phần tử
+function hideToolbarAndDeselect() {
+    if (selectedElement) {
+        selectedElement.classList.remove("selected-element-outline");
+        const handle = selectedElement.querySelector(".custom-resize-handle");
+        if (handle) handle.style.display = "none";
+    }
+    if (toolbar) toolbar.style.display = "none";
+    selectedElement = null;
+}
+
+// Hàm chọn phần tử
+function selectElement(el) {
+    if (selectedElement) {
+        selectedElement.classList.remove("selected-element-outline");
+        const oldHandle = selectedElement.querySelector(".custom-resize-handle");
+        if (oldHandle) oldHandle.style.display = "none";
+    }
+
+    selectedElement = el;
+
+    if (selectedElement) {
+        selectedElement.classList.add("selected-element-outline");
+        const newHandle = selectedElement.querySelector(".custom-resize-handle");
+        if (newHandle) newHandle.style.display = "block";
+
+        if (selectedElement.id === 'miniMapAddress') {
+            ensureToolbar();
+            toolbar.style.display = "flex";
+            updateToolbarUI(selectedElement);
+            updateToolbarPosition(selectedElement);
+        } else if (selectedElement.id === 'miniMapWrap') {
+            // Show resize handle for mini map
+            if (toolbar) toolbar.style.display = "none";
+        } else {
+            if (toolbar) toolbar.style.display = "none";
+        }
+    }
+}
+
+// --- Kết thúc: Code từ editDesign.js ---
 
 // Helper to create triangle resize handle
 function createTriangleResizeHandle() {
@@ -10,15 +156,14 @@ function createTriangleResizeHandle() {
     handle.style.position = "absolute";
     handle.style.width = "18px";
     handle.style.height = "18px";
-    handle.style.right = "0";
-    handle.style.bottom = "0";
-    handle.style.background = "linear-gradient(135deg, #fff 50%, transparent 50%)";
-    handle.style.borderRight = "1px solid #888";
-    handle.style.borderBottom = "1px solid #888";
+    handle.style.right = "-1px";
+    handle.style.bottom = "-1px";
+    handle.style.background = "white";
+    handle.style.border = "1px solid black";
     handle.style.cursor = "nwse-resize";
     handle.style.zIndex = "201";
-    handle.style.opacity = "0.8";
-    handle.style.clipPath = "polygon(0% 100%, 100% 100%, 100% 0%)";
+    handle.style.display = "none";
+    handle.style.clipPath = "polygon(100% 0, 100% 100%, 0 100%)";
     return handle;
 }
 
@@ -63,7 +208,6 @@ function showAddressModal() {
     mapConfirm = document.getElementById("addressConfirm");
     mapCancel = document.getElementById("addressCancel");
 
-    // Google Maps Autocomplete
     if (window.google && window.google.maps) {
         const autocomplete = new google.maps.places.Autocomplete(mapInput, { types: ["geocode"] });
         autocomplete.addListener("place_changed", () => {
@@ -112,25 +256,56 @@ function geocodeAddress(address, callback) {
     });
 }
 
+// Add map to sidebar
+function addMapToSidebar(address, id) {
+    const mapList = document.getElementById("mapList");
+    if (!mapList) return;
+
+    const mapItem = document.createElement("div");
+    mapItem.className = "element map-item";
+    mapItem.dataset.id = id;
+    mapItem.innerHTML = `
+        <i class="fas fa-map-marker-alt" style="margin-right: 10px; color: #d00;"></i>
+        <span class="name">${address}</span>
+        <div class="fas fa-trash-alt"></div>
+    `;
+    mapList.appendChild(mapItem);
+
+    mapItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+        mapItem.remove();
+        // Remove mini map and address text from canvas
+        if (miniMapWrap) miniMapWrap.remove();
+        if (addressTextEl) addressTextEl.remove();
+        const zoomBtnWrap = document.getElementById("zoomBtnWrap");
+        if (zoomBtnWrap) zoomBtnWrap.remove();
+        if (selectedElement && (selectedElement === miniMapWrap || selectedElement === addressTextEl)) {
+            hideToolbarAndDeselect();
+        }
+    });
+
+    mapItem.addEventListener("click", () => {
+        if (miniMapWrap) selectElement(miniMapWrap);
+    });
+}
+
 // Show mini map on canvas
 function showMiniMap(latLng, address) {
-    // Remove previous
     if (miniMapWrap) miniMapWrap.remove();
     if (addressTextEl) addressTextEl.remove();
     let oldZoomBtnWrap = document.getElementById("zoomBtnWrap");
     if (oldZoomBtnWrap) oldZoomBtnWrap.remove();
 
-    // Canvas
     const canvas = document.querySelector(".canvas");
     if (!canvas) return;
 
-    // Ensure canvas is relative and overflow visible
     canvas.style.position = "relative";
     canvas.style.overflow = "visible";
 
-    // Map container
+    const mapId = `map-${Date.now()}`;
+
     miniMapWrap = document.createElement("div");
     miniMapWrap.id = "miniMapWrap";
+    miniMapWrap.dataset.id = mapId;
     miniMapWrap.style.width = "180px";
     miniMapWrap.style.height = "180px";
     miniMapWrap.style.borderRadius = "50%";
@@ -140,22 +315,23 @@ function showMiniMap(latLng, address) {
     miniMapWrap.style.left = "40px";
     miniMapWrap.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
     miniMapWrap.style.zIndex = 100;
-    miniMapWrap.style.resize = "none";
-    miniMapWrap.style.minWidth = "120px";
-    miniMapWrap.style.minHeight = "120px";
     miniMapWrap.style.cursor = "move";
 
-    // Map div
     const mapDiv = document.createElement("div");
     mapDiv.style.width = "100%";
     mapDiv.style.height = "100%";
     miniMapWrap.appendChild(mapDiv);
 
-    // Custom triangle resize handle for map
     const mapResizeHandle = createTriangleResizeHandle();
     miniMapWrap.appendChild(mapResizeHandle);
 
-    // Resize logic for miniMapWrap
+    miniMapWrap.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (selectedElement !== miniMapWrap) {
+            selectElement(miniMapWrap);
+        }
+    });
+
     let resizingMap = false, startXMap, startYMap, startWMap, startHMap;
     mapResizeHandle.addEventListener("mousedown", (e) => {
         e.stopPropagation();
@@ -175,16 +351,13 @@ function showMiniMap(latLng, address) {
         updateZoomBtnPosition();
     });
     document.addEventListener("mouseup", () => {
-        if (resizingMap) {
-            resizingMap = false;
-            document.body.style.userSelect = "";
-        }
+        resizingMap = false;
+        document.body.style.userSelect = "";
     });
 
-    // Address text
     addressTextEl = document.createElement("div");
     addressTextEl.id = "miniMapAddress";
-    addressTextEl.textContent = address;
+    addressTextEl.appendChild(document.createTextNode(address)); // Sử dụng createTextNode
     addressTextEl.style.position = "absolute";
     addressTextEl.style.top = "230px";
     addressTextEl.style.left = "40px";
@@ -194,17 +367,36 @@ function showMiniMap(latLng, address) {
     addressTextEl.style.boxShadow = "0 1px 4px rgba(0,0,0,0.1)";
     addressTextEl.style.zIndex = 101;
     addressTextEl.style.fontSize = "15px";
-    addressTextEl.style.resize = "none";
-    addressTextEl.style.overflow = "auto";
-    addressTextEl.style.minWidth = "180px";
-    addressTextEl.style.minHeight = "32px";
     addressTextEl.style.cursor = "move";
+    addressTextEl.style.minWidth = "180px";
+    // Set initial dimensions
+    if (!addressTextEl.style.width) addressTextEl.style.width = "180px";
+    if (!addressTextEl.style.height) addressTextEl.style.height = "auto";
 
-    // Custom triangle resize handle for address text
     const textResizeHandle = createTriangleResizeHandle();
     addressTextEl.appendChild(textResizeHandle);
 
-    // Resize logic for addressTextEl
+    addressTextEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (selectedElement !== addressTextEl) {
+            selectElement(addressTextEl);
+        }
+    });
+
+    addressTextEl.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+        addressTextEl.contentEditable = "true";
+        addressTextEl.focus();
+        if (toolbar) toolbar.style.display = "none";
+    });
+
+    addressTextEl.addEventListener("blur", () => {
+        addressTextEl.contentEditable = "false";
+        if(selectedElement === addressTextEl) {
+            selectElement(addressTextEl);
+        }
+    });
+
     let resizingText = false, startXText, startYText, startWText, startHText;
     textResizeHandle.addEventListener("mousedown", (e) => {
         e.stopPropagation();
@@ -221,18 +413,16 @@ function showMiniMap(latLng, address) {
         const dy = e.clientY - startYText;
         addressTextEl.style.width = Math.max(180, startWText + dx) + "px";
         addressTextEl.style.height = Math.max(32, startHText + dy) + "px";
+        if(selectedElement === addressTextEl) updateToolbarPosition(addressTextEl);
     });
     document.addEventListener("mouseup", () => {
-        if (resizingText) {
-            resizingText = false;
-            document.body.style.userSelect = "";
-        }
+        resizingText = false;
+        document.body.style.userSelect = "";
     });
 
     canvas.appendChild(miniMapWrap);
     canvas.appendChild(addressTextEl);
 
-    // --- Zoom button outside the map ---
     const zoomBtnWrap = document.createElement("div");
     zoomBtnWrap.id = "zoomBtnWrap";
     zoomBtnWrap.style.position = "absolute";
@@ -266,7 +456,6 @@ function showMiniMap(latLng, address) {
         showZoomableMap(currentLatLng, currentAddress);
     };
 
-    // Init Google Map
     miniMap = new google.maps.Map(mapDiv, {
         center: latLng,
         zoom: 16,
@@ -286,15 +475,15 @@ function showMiniMap(latLng, address) {
         }
     });
 
-    // --- Drag logic for miniMapWrap and addressTextEl ---
+    // Add to sidebar
+    addMapToSidebar(address, mapId);
+
     let dragTarget = null, offsetX = 0, offsetY = 0;
     function dragMouseDown(e) {
-        if (e.button !== 0) return;
-        // Prevent drag when resizing (bottom right corner)
-        const style = window.getComputedStyle(this);
-        const right = parseInt(style.width) - (e.offsetX || 0);
-        const bottom = parseInt(style.height) - (e.offsetY || 0);
-        if (right < 18 && bottom < 18) return; // near resize handle
+        if (e.button !== 0 || (this.contentEditable === 'true')) return;
+        const handle = this.querySelector(".custom-resize-handle");
+        if(handle && e.target === handle) return;
+
         dragTarget = this;
         const rect = dragTarget.getBoundingClientRect();
         offsetX = e.clientX - rect.left;
@@ -306,7 +495,8 @@ function showMiniMap(latLng, address) {
             const canvasRect = canvas.getBoundingClientRect();
             dragTarget.style.left = (e.clientX - offsetX - canvasRect.left) + "px";
             dragTarget.style.top = (e.clientY - offsetY - canvasRect.top) + "px";
-            updateZoomBtnPosition();
+            if(dragTarget === miniMapWrap) updateZoomBtnPosition();
+            if(dragTarget === selectedElement) updateToolbarPosition(dragTarget);
         }
     }
     function dragMouseUp() {
@@ -338,9 +528,17 @@ window.addEventListener("DOMContentLoaded", () => {
     if (generateBtn) {
         generateBtn.onclick = showAddressModal;
     }
+
+    document.addEventListener("mousedown", (e) => {
+        const isInsideElement = e.target.closest("#miniMapWrap, #miniMapAddress");
+        const isInsideToolbar = e.target.closest("#floatingToolbar");
+        if (!isInsideElement && !isInsideToolbar) {
+            hideToolbarAndDeselect();
+        }
+    });
 });
 
-// --- Zoomable map modal with picking address enabled ---
+// --- Zoomable map modal ---
 function showZoomableMap(latLng, address) {
     const zoomOverlay = document.createElement("div");
     zoomOverlay.style.position = "fixed";
@@ -349,85 +547,126 @@ function showZoomableMap(latLng, address) {
     zoomOverlay.style.width = "100vw";
     zoomOverlay.style.height = "100vh";
     zoomOverlay.style.background = "rgba(0,0,0,0.3)";
-    zoomOverlay.style.backdropFilter = "blur(3px)";
-    zoomOverlay.style.zIndex = 3000;
+    zoomOverlay.style.backdropFilter = "blur(2px)";
+    zoomOverlay.style.zIndex = 4000;
 
     const zoomModal = document.createElement("div");
     zoomModal.style.position = "fixed";
     zoomModal.style.top = "50%";
     zoomModal.style.left = "50%";
     zoomModal.style.transform = "translate(-50%, -50%)";
-    zoomModal.style.width = "700px";
-    zoomModal.style.height = "500px";
+    zoomModal.style.width = "80vw";
+    zoomModal.style.height = "80vh";
+    zoomModal.style.maxWidth = "1000px";
+    zoomModal.style.maxHeight = "800px";
     zoomModal.style.background = "#fff";
-    zoomModal.style.borderRadius = "14px";
-    zoomModal.style.boxShadow = "0 4px 32px rgba(0,0,0,0.25)";
-    zoomModal.style.zIndex = 3100;
+    zoomModal.style.borderRadius = "16px";
+    zoomModal.style.boxShadow = "0 4px 24px rgba(0,0,0,0.25)";
+    zoomModal.style.zIndex = 4100;
     zoomModal.style.display = "flex";
     zoomModal.style.flexDirection = "column";
-    zoomModal.style.resize = "both";
-    zoomModal.style.overflow = "hidden";
-    zoomModal.style.minWidth = "320px";
-    zoomModal.style.minHeight = "220px";
-    zoomModal.style.cursor = "move";
 
     const header = document.createElement("div");
-    header.style.height = "36px";
-    header.style.background = "#f5f5f5";
+    header.style.padding = "12px 20px";
+    header.style.borderBottom = "1px solid #eee";
     header.style.display = "flex";
-    header.style.alignItems = "center";
     header.style.justifyContent = "space-between";
-    header.style.padding = "0 16px";
+    header.style.alignItems = "center";
     header.style.cursor = "move";
-    header.innerHTML = `<span style="font-weight:600;">Map</span>
-        <button id="closeZoomMap" style="border:none;background:none;font-size:20px;cursor:pointer;">&times;</button>`;
+    header.innerHTML = `
+        <div id="zoomAddress" style="font-size:16px; font-weight:500;">${address}</div>
+        <button id="closeZoomMap" style="background:transparent;border:0;font-size:24px;cursor:pointer;">&times;</button>
+    `;
 
-    const mapDiv = document.createElement("div");
-    mapDiv.style.flex = "1";
-    mapDiv.style.width = "100%";
-    mapDiv.style.height = "100%";
-    mapDiv.style.cursor = "default";
+    const mapContainer = document.createElement("div");
+    mapContainer.style.flexGrow = 1;
 
     zoomModal.appendChild(header);
-    zoomModal.appendChild(mapDiv);
-
+    zoomModal.appendChild(mapContainer);
     document.body.appendChild(zoomOverlay);
     document.body.appendChild(zoomModal);
 
-    // Google Map
-    const zoomMap = new google.maps.Map(mapDiv, {
+    const zoomMap = new google.maps.Map(mapContainer, {
         center: latLng,
         zoom: 17,
-        gestureHandling: "auto"
-    });
-    const marker = new google.maps.Marker({
-        position: latLng,
-        map: zoomMap
+        mapTypeControl: true,
+        streetViewControl: true,
     });
 
-    // Allow picking address only in zoom modal
-    zoomMap.addListener("click", function(e) {
-        const newLatLng = e.latLng;
-        marker.setPosition(newLatLng);
-        reverseGeocode(newLatLng, (newAddress) => {
-            currentLatLng = newLatLng;
+    const marker = new google.maps.Marker({
+        position: latLng,
+        map: zoomMap,
+        draggable: true
+    });
+
+    // Add click listener to map for updating location
+    zoomMap.addListener("click", (e) => {
+        const clickedLatLng = e.latLng;
+        marker.setPosition(clickedLatLng);
+        zoomMap.setCenter(clickedLatLng);
+
+        reverseGeocode(clickedLatLng, (newAddress) => {
+            currentLatLng = clickedLatLng;
             currentAddress = newAddress;
-            if (addressTextEl) addressTextEl.textContent = newAddress || "Unknown address";
-            // Update miniMapMarker if exists
+            header.querySelector("#zoomAddress").textContent = newAddress || "Unknown location";
+
+            // ### FIX START ###
+            if (addressTextEl && addressTextEl.childNodes[0].nodeType === Node.TEXT_NODE) {
+                addressTextEl.childNodes[0].nodeValue = newAddress || "Unknown location";
+            }
+            // ### FIX END ###
+
             if (miniMapMarker && miniMap) {
-                miniMap.setCenter(newLatLng);
-                miniMapMarker.setPosition(newLatLng);
+                miniMap.setCenter(clickedLatLng);
+                miniMapMarker.setPosition(clickedLatLng);
+            }
+            // Update sidebar map item
+            const mapList = document.getElementById("mapList");
+            if (mapList && miniMapWrap) {
+                const mapItem = mapList.querySelector(`.map-item[data-id="${miniMapWrap.dataset.id}"]`);
+                if (mapItem) {
+                    const nameSpan = mapItem.querySelector(".name");
+                    if (nameSpan) nameSpan.textContent = newAddress || "Unknown location";
+                }
             }
         });
     });
 
-    // Close
+    marker.addListener("dragend", () => {
+        const newLatLng = marker.getPosition();
+        zoomMap.setCenter(newLatLng);
+        reverseGeocode(newLatLng, (newAddress) => {
+            currentLatLng = newLatLng;
+            currentAddress = newAddress;
+            header.querySelector("#zoomAddress").textContent = newAddress || "Unknown location";
+
+            // ### FIX START ###
+            if (addressTextEl && addressTextEl.childNodes[0].nodeType === Node.TEXT_NODE) {
+                addressTextEl.childNodes[0].nodeValue = newAddress || "Unknown location";
+            }
+            // ### FIX END ###
+
+            if (miniMapMarker && miniMap) {
+                miniMap.setCenter(newLatLng);
+                miniMapMarker.setPosition(newLatLng);
+            }
+            // Update sidebar map item
+            const mapList = document.getElementById("mapList");
+            if (mapList && miniMapWrap) {
+                const mapItem = mapList.querySelector(`.map-item[data-id="${miniMapWrap.dataset.id}"]`);
+                if (mapItem) {
+                    const nameSpan = mapItem.querySelector(".name");
+                    if (nameSpan) nameSpan.textContent = newAddress || "Unknown location";
+                }
+            }
+        });
+    });
+
     header.querySelector("#closeZoomMap").onclick = () => {
         zoomModal.remove();
         zoomOverlay.remove();
     };
 
-    // Drag logic for modal
     let isDragging = false, startX, startY, startLeft, startTop;
     header.onmousedown = function(e) {
         if (e.button !== 0) return;

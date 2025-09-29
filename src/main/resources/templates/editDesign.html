@@ -53,7 +53,7 @@
         <div class="text-sidebar">
             <button class="add-btn" id="addTextBtn">+ Add Text Element</button>
             <div class="quality">Text Elements</div>
-            <div class="elements" id="elementsList">
+            <div class="elements" id="elementsList" >
                 <div class="element">
                     <div class="name" id="save_the_date">Save the Date</div>
                     <div class="fas fa-trash-alt"></div>
@@ -117,19 +117,21 @@
             <div class="elements" id="imageList"></div>
 
             <button class="add-btn" id="generateAddressBtn">+ Generate address</button>
-            <div class="quality"></div>
+            <div class="quality">Uploaded Map</div>
             <div class="elements" id="mapList"></div>
         </div>
 
     </aside>
 
     <main class="canvas-wrap">
-        <div class="canvas fade-in" role="region" aria-label="Design canvas">
-            <div class="card" id="card">
-                <h3>Save the Date</h3>
-                <h1>A &amp; B</h1>
-                <p>June 30, 2025</p>
-            </div>
+        <div class="canvas fade-in" role="region" aria-label="Design canvas"
+             th:utext="${template == null
+            ? '<div class=&quot;card&quot; id=&quot;card&quot;>'+
+                 '<h3>Save the Date</h3> ' +
+                  '<h1>A &amp; B</h1>'  +
+                   '<p>June 30, 2025</p>' +
+               '</div>'
+            : template.htmlCode}">
         </div>
     </main>
     <div></div>

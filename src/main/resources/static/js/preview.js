@@ -3,14 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const previewBtn = document.querySelector(".header .btn:nth-child(2)");
     const sidebar = document.querySelector(".sidebar");
     const header = document.querySelector(".header");
-    const toolbar = document.getElementById("floatingToolbar");
+    const textToolbar = document.getElementById("floatingToolbar");
+    // ### CODE MỚI: Lấy card toolbar ###
+    const cardToolbar = document.getElementById("cardToolbar");
+
 
     let isFullscreen = false;
 
     // Hàm gắn sự kiện cho nút Preview
     function attachPreviewEvent() {
         if (previewBtn) {
-            previewBtn.removeEventListener("click", enterFullscreen); // Gỡ sự kiện cũ
+            previewBtn.removeEventListener("click", enterFullscreen);
             previewBtn.addEventListener("click", enterFullscreen);
             console.log("Preview event attached");
         }
@@ -22,13 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const draggableElements = document.querySelectorAll(".draggable-text, .draggable-image, .draggable-video");
         const resizeHandles = document.querySelectorAll(".resize-handle");
         const confirmButtons = document.querySelectorAll(".draggable-button");
+        // ### CODE MỚI: Lấy tất cả các card ###
+        const cards = document.querySelectorAll(".card");
 
+        // Vô hiệu hóa các element kéo thả thông thường
         draggableElements.forEach(el => {
             el.style.pointerEvents = "none";
-            const existingEvents = el.getAttribute("data-events-disabled");
-            if (!existingEvents) {
-                el.setAttribute("data-events-disabled", "true");
-            }
+            el.setAttribute("data-events-disabled", "true");
         });
         resizeHandles.forEach(handle => {
             handle.style.display = "none";
@@ -43,13 +46,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 resizeHandle.style.pointerEvents = "none";
             }
         });
+
+        // Vô hiệu hóa map và address elements
+        const miniMapWrap = document.getElementById("miniMapWrap");
+        const addressTextEl = document.getElementById("miniMapAddress");
+        const zoomBtnWrap = document.getElementById("zoomBtnWrap");
+
+        if (miniMapWrap) miniMapWrap.style.pointerEvents = "none";
+        if (addressTextEl) addressTextEl.style.pointerEvents = "none";
+        if (zoomBtnWrap) zoomBtnWrap.style.display = "none";
+
+        // ### CODE MỚI: Vô hiệu hóa card ###
+        cards.forEach(card => {
+            card.style.pointerEvents = "none"; // Tắt click
+        });
+
+        // Đảm bảo các element không ở trạng thái được chọn (sẽ ẩn tất cả toolbar)
+        if (typeof hideToolbars === 'function') { // Sử dụng hàm mới từ editDesign.js
+            hideToolbars();
+        } else if (typeof hideToolbarAndDeselect === 'function') { // Fallback cho hàm cũ
+            hideToolbarAndDeselect();
+        }
     }
 
     function restoreInteractions() {
         const draggableElements = document.querySelectorAll(".draggable-text, .draggable-image, .draggable-video");
         const resizeHandles = document.querySelectorAll(".resize-handle");
         const confirmButtons = document.querySelectorAll(".draggable-button");
+        // ### CODE MỚI: Lấy tất cả các card ###
+        const cards = document.querySelectorAll(".card");
 
+        // Khôi phục các element kéo thả thông thường
         draggableElements.forEach(el => {
             if (el.getAttribute("data-events-disabled") === "true") {
                 el.style.pointerEvents = "";
@@ -58,21 +85,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         resizeHandles.forEach(handle => {
             handle.style.pointerEvents = "";
-            const parent = handle.parentElement;
-            if (parent && (parent.classList.contains("draggable-text") || parent.classList.contains("draggable-image") || parent.classList.contains("draggable-video") || parent.classList.contains("draggable-button"))) {
-                handle.style.display = "block";
-            }
         });
         confirmButtons.forEach(button => {
-            button.style.pointerEvents = ""; // Restore pointer events
+            button.style.pointerEvents = "";
             button.style.userSelect = "";
             button.style.cursor = "move";
-            button.style.zIndex = "1000"; // Ensure above background
             const resizeHandle = button.querySelector(".resize-handle");
             if (resizeHandle) {
-                resizeHandle.style.display = "block";
                 resizeHandle.style.pointerEvents = "";
             }
+        });
+
+        // Khôi phục map và address elements
+        const miniMapWrap = document.getElementById("miniMapWrap");
+        const addressTextEl = document.getElementById("miniMapAddress");
+        const zoomBtnWrap = document.getElementById("zoomBtnWrap");
+
+        if (miniMapWrap) miniMapWrap.style.pointerEvents = "";
+        if (addressTextEl) addressTextEl.style.pointerEvents = "";
+        if (zoomBtnWrap) zoomBtnWrap.style.display = "";
+
+        // ### CODE MỚI: Khôi phục card ###
+        cards.forEach(card => {
+            card.style.pointerEvents = ""; // Mở lại click
         });
     }
 
@@ -90,10 +125,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 elem.msRequestFullscreen();
             }
 
-            // Ẩn sidebar, header, và toolbar
+            // Ẩn sidebar, header, và toolbars
             if (sidebar) sidebar.style.display = "none";
             if (header) header.style.display = "none";
-            if (toolbar) toolbar.style.display = "none";
+            if (textToolbar) textToolbar.style.display = "none";
+            // ### CODE MỚI: Ẩn card toolbar ###
+            if (cardToolbar) cardToolbar.style.display = "none";
+
 
             // Vô hiệu hóa kéo thả, resize, và click
             disableInteractions();
@@ -101,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Thiết lập sự kiện click cho confirm buttons
             confirmButtons.forEach(button => {
                 button.style.cursor = "pointer";
-                button.style.pointerEvents = "auto"; // Cho phép click riêng
+                button.style.pointerEvents = "auto";
                 button.dataset.href = "confirmWeeding";
                 button.addEventListener("click", handleButtonClick);
             });
@@ -134,10 +172,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Hiển thị lại sidebar, header, và toolbar
+            // Hiển thị lại sidebar, header
             if (sidebar) sidebar.style.display = "block";
             if (header) header.style.display = "flex";
-            if (toolbar) toolbar.style.display = "none";
+            // Toolbar sẽ tự động ẩn/hiện khi chọn element, không cần set ở đây
 
             // Khôi phục kéo thả, resize, và click
             restoreInteractions();
@@ -145,13 +183,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // Vô hiệu hóa sự kiện của confirm buttons
             confirmButtons.forEach(button => {
                 button.style.cursor = "move";
-                // button.style.pointerEvents = "none"; // Vô hiệu hóa click khi không fullscreen
                 button.removeEventListener("click", handleButtonClick);
                 delete button.dataset.href;
             });
 
             isFullscreen = false;
-            attachPreviewEvent(); // Gắn lại sự kiện cho nút Preview
+            attachPreviewEvent();
             console.log("Exited fullscreen, reattached Preview event");
         }
     }

@@ -629,3 +629,52 @@ body {
 #miniMapWrap.selected .custom-resize-handle {
     display: block;
 }
+
+.selected-element-outline {
+    box-shadow: 0 0 0 1px white;
+}
+.selection-box {
+    box-sizing: border-box;
+    pointer-events: none; /* Cho phép click xuyên qua border */
+}
+#miniMapWrap.selected-element-outline {
+    outline-offset: 2px;
+}
+
+/* CSS cho danh sách bản đồ trong sidebar */
+.map-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.map-list-item .fa-map-marked-alt {
+    border: 2px solid #444 !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+}
+
+.map-list-item span {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.map-list-item .delete-map-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.map-list-item .delete-map-btn:hover {
+    color: #d9534f; /* Màu đỏ khi hover */
+}
