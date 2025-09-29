@@ -1,6 +1,7 @@
 package com.Services;
 
 import com.Model.Users;
+import com.Model.UsersDetail;
 import com.Repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -18,4 +19,5 @@ public class UserService {
                 .filter(users -> password.equals(users.getPassword()))
                 .orElse(null);
     }
+
 }

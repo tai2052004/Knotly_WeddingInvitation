@@ -66,13 +66,4 @@ public class WebRouting {
         return "resetPassword";
     }
 
-    @GetMapping("/profile")
-    public String profile(Model model) {
-        return "profile";
-    }
-
-    @GetMapping("/security")
-    public String sercurity(Model model) {
-        return "security";
-    }
 }

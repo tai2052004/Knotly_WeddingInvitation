@@ -43,5 +43,4 @@ public class AuthController {
         session.invalidate(); // clear session
         return "redirect:/";
     }
-
 }
