@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invitation</title>
+
+    <link rel="stylesheet" href="/css/editDesign.css">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+</head>
+<body>
+<div>
+    <div class="canvas fade-in" role="region" aria-label="Design canvas"
+         th:utext="${template == null
+            ? '<div class=&quot;card&quot; id=&quot;card&quot;>'+
+                 '<h3>Save the Date</h3> ' +
+                  '<h1>A &amp; B</h1>'  +
+                   '<p>June 30, 2025</p>' +
+               '</div>'
+            : template.htmlCode}">
+    </div>
+</div>
+
+
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsjGimn5mrdv4SaHko6T4Ge8hChEHQQFc&libraries=places"></script>
+
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+
+<script src="/js/editDesign.js"></script>
+<script src="/js/preview.js"></script>
+<script src="/js/addressMap.js"></script>
+</body>
+</html>

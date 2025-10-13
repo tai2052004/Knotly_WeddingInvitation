@@ -15,13 +15,13 @@ public class Template {
     @Column(name = "template_name", nullable = true, length = 255)
     private String templateName;
 
-    @Column(name = "html_code", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "html_code", nullable = true, columnDefinition = "NVARCHAR(MAX)")
     private String htmlCode;
 
-    @Column(name = "html_image", nullable = false, columnDefinition = "NVARCHAR(200)")
+    @Column(name = "html_image", nullable = true, columnDefinition = "NVARCHAR(200)")
     private String htmlImage;
 
-    @Column(name = "created_at", updatable = false, insertable = false,
+    @Column(name = "created_at", updatable = true, insertable = false,
             columnDefinition = "DATETIME DEFAULT GETDATE()")
     private LocalDateTime createdAt;
 

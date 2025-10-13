@@ -50,12 +50,13 @@ public class WebRouting {
         model.addAttribute("template", template);
         return "complete_template";
     }
-
-    @GetMapping("/confirmWeeding")
-    public String confirmWeeding(Model model) {
-        return "confirmWeeding";
+    @GetMapping("/template")
+    public String template(Model model) {
+        Template template = new Template();
+        template = templateService.loadTemplate(4);
+        model.addAttribute("template", template);
+        return "editDesign";
     }
-
     @GetMapping("/forgotPassword")
     public String forgotPassword(Model model) {
         return "forgotPassword";

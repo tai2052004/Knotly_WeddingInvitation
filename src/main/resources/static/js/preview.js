@@ -1,222 +1,160 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Lấy các phần tử cần thiết
-    const previewBtn = document.querySelector(".header .btn:nth-child(2)");
+    const previewBtn = document.querySelector(".header .btn:nth-child(2)"); // Nút Preview
     const sidebar = document.querySelector(".sidebar");
     const header = document.querySelector(".header");
     const textToolbar = document.getElementById("floatingToolbar");
-    // ### CODE MỚI: Lấy card toolbar ###
     const cardToolbar = document.getElementById("cardToolbar");
+    const canvas = document.querySelector('.canvas'); // Thêm canvas để làm việc
 
+    let isPreviewMode = false;
 
-    let isFullscreen = false;
-
-    // Hàm gắn sự kiện cho nút Preview
-    function attachPreviewEvent() {
-        if (previewBtn) {
-            previewBtn.removeEventListener("click", enterFullscreen);
-            previewBtn.addEventListener("click", enterFullscreen);
-            console.log("Preview event attached");
-        }
-    }
-
-    // Hàm vô hiệu hóa kéo thả, resize, và click
-    function disableInteractions() {
-        // Lấy lại các phần tử mỗi lần gọi
-        const draggableElements = document.querySelectorAll(".draggable-text, .draggable-image, .draggable-video");
-        const resizeHandles = document.querySelectorAll(".resize-handle");
-        const confirmButtons = document.querySelectorAll(".draggable-button");
-        // ### CODE MỚI: Lấy tất cả các card ###
-        const cards = document.querySelectorAll(".card");
-
-        // Vô hiệu hóa các element kéo thả thông thường
-        draggableElements.forEach(el => {
-            el.style.pointerEvents = "none";
-            el.setAttribute("data-events-disabled", "true");
+    // Hàm vô hiệu hóa các tương tác trong chế độ chỉnh sửa
+    function disableEditorInteractions() {
+        // Vô hiệu hóa tất cả các phần tử có thể kéo thả
+        canvas.querySelectorAll(".draggable-text, .draggable-image, .draggable-video, .draggable-button, .draggable-qrcode, .card").forEach(el => {
+            el.style.pointerEvents = "none"; // Tắt tất cả các sự kiện chuột
         });
-        resizeHandles.forEach(handle => {
+
+        // Ẩn tất cả resize handles
+        canvas.querySelectorAll(".resize-handle").forEach(handle => {
             handle.style.display = "none";
-            handle.style.pointerEvents = "none";
-        });
-        confirmButtons.forEach(button => {
-            button.style.pointerEvents = "none";
-            button.style.userSelect = "none";
-            const resizeHandle = button.querySelector(".resize-handle");
-            if (resizeHandle) {
-                resizeHandle.style.display = "none";
-                resizeHandle.style.pointerEvents = "none";
-            }
         });
 
-        // Vô hiệu hóa map và address elements
-        const miniMapWrap = document.getElementById("miniMapWrap");
-        const addressTextEl = document.getElementById("miniMapAddress");
-        const zoomBtnWrap = document.getElementById("zoomBtnWrap");
-
-        if (miniMapWrap) miniMapWrap.style.pointerEvents = "none";
-        if (addressTextEl) addressTextEl.style.pointerEvents = "none";
-        if (zoomBtnWrap) zoomBtnWrap.style.display = "none";
-
-        // ### CODE MỚI: Vô hiệu hóa card ###
-        cards.forEach(card => {
-            card.style.pointerEvents = "none"; // Tắt click
-        });
-
-        // Đảm bảo các element không ở trạng thái được chọn (sẽ ẩn tất cả toolbar)
-        if (typeof hideToolbars === 'function') { // Sử dụng hàm mới từ editDesign.js
+        // Đảm bảo các toolbar đều bị ẩn
+        if (typeof hideToolbars === 'function') {
             hideToolbars();
-        } else if (typeof hideToolbarAndDeselect === 'function') { // Fallback cho hàm cũ
-            hideToolbarAndDeselect();
         }
     }
 
-    function restoreInteractions() {
-        const draggableElements = document.querySelectorAll(".draggable-text, .draggable-image, .draggable-video");
-        const resizeHandles = document.querySelectorAll(".resize-handle");
-        const confirmButtons = document.querySelectorAll(".draggable-button");
-        // ### CODE MỚI: Lấy tất cả các card ###
-        const cards = document.querySelectorAll(".card");
+    // Hàm khôi phục các tương tác trong chế độ chỉnh sửa
+    function restoreEditorInteractions() {
+        canvas.querySelectorAll(".draggable-text, .draggable-image, .draggable-video, .draggable-button, .draggable-qrcode, .card").forEach(el => {
+            el.style.pointerEvents = ""; // Mở lại sự kiện chuột
+        });
 
-        // Khôi phục các element kéo thả thông thường
-        draggableElements.forEach(el => {
-            if (el.getAttribute("data-events-disabled") === "true") {
-                el.style.pointerEvents = "";
-                el.removeAttribute("data-events-disabled");
+        // Việc hiển thị lại resize handle sẽ được quản lý bởi hàm selectElement khi người dùng click
+    }
+
+    // Hàm kích hoạt các liên kết cho chế độ xem trước
+    function activatePreviewLinks() {
+        const clickableElements = canvas.querySelectorAll('[data-link], [data-url]');
+
+        clickableElements.forEach(element => {
+            const link = element.dataset.link || element.dataset.url;
+            if (link) {
+                element.style.pointerEvents = "auto"; // Cho phép click vào phần tử này
+                element.style.cursor = "pointer";
+                element.addEventListener("click", handleLinkClick);
             }
         });
-        resizeHandles.forEach(handle => {
-            handle.style.pointerEvents = "";
-        });
-        confirmButtons.forEach(button => {
-            button.style.pointerEvents = "";
-            button.style.userSelect = "";
-            button.style.cursor = "move";
-            const resizeHandle = button.querySelector(".resize-handle");
-            if (resizeHandle) {
-                resizeHandle.style.pointerEvents = "";
-            }
-        });
+    }
 
-        // Khôi phục map và address elements
-        const miniMapWrap = document.getElementById("miniMapWrap");
-        const addressTextEl = document.getElementById("miniMapAddress");
-        const zoomBtnWrap = document.getElementById("zoomBtnWrap");
+    // Hàm vô hiệu hóa các liên kết khi thoát xem trước
+    function deactivatePreviewLinks() {
+        const clickableElements = canvas.querySelectorAll('[data-link], [data-url]');
 
-        if (miniMapWrap) miniMapWrap.style.pointerEvents = "";
-        if (addressTextEl) addressTextEl.style.pointerEvents = "";
-        if (zoomBtnWrap) zoomBtnWrap.style.display = "";
-
-        // ### CODE MỚI: Khôi phục card ###
-        cards.forEach(card => {
-            card.style.pointerEvents = ""; // Mở lại click
+        clickableElements.forEach(element => {
+            element.style.cursor = ""; // Trả lại con trỏ mặc định (thường là 'move')
+            element.removeEventListener("click", handleLinkClick);
         });
     }
 
+    // Hàm xử lý khi click vào một liên kết trong chế độ xem trước
+    function handleLinkClick(e) {
+        // Chỉ hoạt động khi ở chế độ xem trước
+        if (!isPreviewMode) return;
 
-    // Hàm kích hoạt chế độ fullscreen
-    function enterFullscreen() {
-        const confirmButtons = document.querySelectorAll(".draggable-button");
-        if (!isFullscreen && previewBtn) {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.error("Fullscreen request failed:", err));
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
+        e.preventDefault();
+        e.stopPropagation();
+
+        const link = e.currentTarget.dataset.link || e.currentTarget.dataset.url;
+        console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaa",link);
+        if (link) {
+            window.open(link, "_blank");
+            console.log("Đã mở link trong tab mới:", link);
+        }
+    }
+
+    // Hàm chính: Bật chế độ xem trước
+    function enterPreviewMode() {
+        if (isPreviewMode) return;
+
+        const elem = document.documentElement;
+        // Bật chế độ toàn màn hình
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => console.error("Lỗi khi bật toàn màn hình:", err));
+        } else if (elem.webkitRequestFullscreen) { // Safari
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { // IE11
+            elem.msRequestFullscreen();
+        }
+
+        // Ẩn các giao diện của trình chỉnh sửa
+        if (sidebar) sidebar.style.display = "none";
+        if (header) header.style.display = "none";
+
+        // Vô hiệu hóa các tương tác chỉnh sửa
+        disableEditorInteractions();
+
+        // Kích hoạt các link
+        activatePreviewLinks();
+
+        isPreviewMode = true;
+        console.log("Đã vào chế độ xem trước.");
+    }
+
+    // Hàm chính: Thoát chế độ xem trước
+    function exitPreviewMode() {
+        if (!isPreviewMode) return;
+
+        // Thoát chế độ toàn màn hình
+        if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.error("Lỗi khi thoát toàn màn hình:", err));
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
             }
-
-            // Ẩn sidebar, header, và toolbars
-            if (sidebar) sidebar.style.display = "none";
-            if (header) header.style.display = "none";
-            if (textToolbar) textToolbar.style.display = "none";
-            // ### CODE MỚI: Ẩn card toolbar ###
-            if (cardToolbar) cardToolbar.style.display = "none";
-
-
-            // Vô hiệu hóa kéo thả, resize, và click
-            disableInteractions();
-
-            // Thiết lập sự kiện click cho confirm buttons
-            confirmButtons.forEach(button => {
-                button.style.cursor = "pointer";
-                button.style.pointerEvents = "auto";
-                button.dataset.href = "confirmWeeding";
-                button.addEventListener("click", handleButtonClick);
-            });
-
-            isFullscreen = true;
-            console.log("Entered fullscreen");
         }
+
+        // Hiển thị lại giao diện trình chỉnh sửa
+        if (sidebar) sidebar.style.display = "block";
+        if (header) header.style.display = "flex";
+
+        // Vô hiệu hóa các link
+        deactivatePreviewLinks();
+
+        // Khôi phục các tương tác chỉnh sửa
+        restoreEditorInteractions();
+
+        isPreviewMode = false;
+        console.log("Đã thoát chế độ xem trước.");
     }
 
-    // Hàm xử lý click vào confirm button
-    function handleButtonClick(e) {
-        if (isFullscreen && e.target.dataset.href) {
-            e.preventDefault();
-            window.open(e.target.dataset.href, "_blank");
-            console.log("Confirm button clicked, opened new tab");
-        }
+    // Gắn sự kiện cho nút Preview
+    if (previewBtn) {
+        previewBtn.addEventListener("click", enterPreviewMode);
     }
 
-    // Hàm thoát chế độ fullscreen
-    function exitFullscreen() {
-        const confirmButtons = document.querySelectorAll(".draggable-button");
-        if (isFullscreen) {
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen().catch(err => console.error("Exit fullscreen failed:", err));
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
-            }
-
-            // Hiển thị lại sidebar, header
-            if (sidebar) sidebar.style.display = "block";
-            if (header) header.style.display = "flex";
-            // Toolbar sẽ tự động ẩn/hiện khi chọn element, không cần set ở đây
-
-            // Khôi phục kéo thả, resize, và click
-            restoreInteractions();
-
-            // Vô hiệu hóa sự kiện của confirm buttons
-            confirmButtons.forEach(button => {
-                button.style.cursor = "move";
-                button.removeEventListener("click", handleButtonClick);
-                delete button.dataset.href;
-            });
-
-            isFullscreen = false;
-            attachPreviewEvent();
-            console.log("Exited fullscreen, reattached Preview event");
-        }
-    }
-
-    // Khởi tạo gắn sự kiện
-    attachPreviewEvent();
-
-    // Gắn sự kiện keydown để thoát fullscreen khi bấm ESC
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && isFullscreen) {
-            exitFullscreen();
-        }
-    });
-
-    // Xử lý khi trình duyệt tự thoát fullscreen
+    // Lắng nghe sự kiện thoát fullscreen (ví dụ: bấm phím ESC)
     document.addEventListener("fullscreenchange", () => {
-        if (!document.fullscreenElement && isFullscreen) {
-            exitFullscreen();
+        // Nếu không còn phần tử nào ở chế độ fullscreen và chúng ta đang ở chế độ preview
+        if (!document.fullscreenElement && isPreviewMode) {
+            exitPreviewMode();
         }
     });
+
+    // Các trình duyệt khác
     document.addEventListener("webkitfullscreenchange", () => {
-        if (!document.webkitFullscreenElement && isFullscreen) {
-            exitFullscreen();
+        if (!document.webkitFullscreenElement && isPreviewMode) {
+            exitPreviewMode();
         }
     });
     document.addEventListener("msfullscreenchange", () => {
-        if (!document.msFullscreenElement && isFullscreen) {
-            exitFullscreen();
+        if (!document.msFullscreenElement && isPreviewMode) {
+            exitPreviewMode();
         }
     });
 });

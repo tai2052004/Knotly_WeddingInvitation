@@ -19,4 +19,7 @@ public class TemplateService {
     public List<Template> loadAllTemplates() {
         return templateRepository.findAll();
     }
+    public Template saveTemplate(Template template) {
+        return templateRepository.save(template);
+    }
 }

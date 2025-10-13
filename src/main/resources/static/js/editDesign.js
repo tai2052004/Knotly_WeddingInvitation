@@ -8,10 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const buttonsList = document.getElementById("buttonList");
     const canvas = document.querySelector(".canvas");
 
-    // ### FIX: Thiết lập đầy đủ style cho canvas ngay từ đầu ###
     if (canvas) {
         canvas.style.position = "relative";
-        canvas.style.overflow = "visible"; // Dòng code quan trọng được thêm vào
+        canvas.style.overflow = "visible";
     }
 
     let card = document.getElementById("card");
@@ -25,6 +24,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const backgroundBtn = document.querySelector(".background-btn");
     const uploadImageInput = document.getElementById("uploadImageInput");
     const imageList = document.getElementById("imageList");
+
+    // --- DOM và Logic cho Share Modal ---
+    const shareBtn = document.getElementById("shareBtn");
+    const shareLinkOverlay = document.getElementById("shareLinkOverlay");
+    const closeShareBtn = document.getElementById("closeShareBtn");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const shareLinkInput = document.getElementById("shareLinkInput");
+
+    if (shareBtn) {
+        shareBtn.addEventListener("click", () => shareLinkOverlay.classList.add("visible"));
+    }
+    if (closeShareBtn) {
+        closeShareBtn.addEventListener("click", () => shareLinkOverlay.classList.remove("visible"));
+    }
+    if (shareLinkOverlay) {
+        shareLinkOverlay.addEventListener("click", (e) => {
+            if (e.target === shareLinkOverlay) {
+                shareLinkOverlay.classList.remove("visible");
+            }
+        });
+    }
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener("click", () => {
+            shareLinkInput.select();
+            document.execCommand("copy");
+            alert("Link copied to clipboard!");
+        });
+    }
+
 
     let pageCounter = 1;
     let selectedElement = null;
@@ -145,7 +173,14 @@ document.addEventListener("DOMContentLoaded", () => {
         targetToolbar.style.left = `${Math.max(6, left)}px`;
     }
 
+    // FIX: Sửa lỗi resize-handle biến mất khi click lần 2
     function selectElement(el) {
+        // Nếu click lại vào phần tử đang được chọn thì không làm gì cả
+        if (selectedElement === el) {
+            return;
+        }
+
+        // Bỏ chọn phần tử cũ
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
@@ -155,6 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const oldHandle = selectedElement.querySelector(".resize-handle");
             if (oldHandle) oldHandle.style.display = "none";
         }
+
+        // Chọn phần tử mới
         selectedElement = el;
         if (selectedElement) {
             if (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")) {
@@ -164,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 cardToolbar.style.display = "none";
                 toolbar.style.display = "flex";
                 updateToolbarUI(selectedElement);
-            } else if (selectedElement.classList.contains("draggable-image")) {
+            } else if (selectedElement.classList.contains("draggable-image") || selectedElement.classList.contains("draggable-qrcode")) {
                 selectedElement.classList.add("selected-image-outline");
                 const currentHandle = selectedElement.querySelector(".resize-handle");
                 if (currentHandle) currentHandle.style.display = "block";
@@ -179,6 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
             updateToolbarPosition(selectedElement);
         }
     }
+
 
     function hideToolbars() {
         if (selectedElement) {
@@ -250,12 +288,36 @@ document.addEventListener("DOMContentLoaded", () => {
             const newW = Math.max(20, resizeStartW + dx);
             const newH = Math.max(20, resizeStartH + dy);
             resizingEl.style.width = newW + "px";
-            resizingEl.style.height = newH + "px";
+            if (resizingEl.classList.contains("draggable-qrcode")) {
+                resizingEl.style.height = newW + "px"; // Keep QR code square
+            } else {
+                resizingEl.style.height = newH + "px";
+            }
             updateToolbarPosition(resizingEl);
         }
     });
     document.addEventListener("mouseup", () => {
         if (resizingEl) {
+            // Tìm đến đoạn logic dành cho draggable-qrcode
+            if (resizingEl.classList.contains("draggable-qrcode")) {
+                const url = resizingEl.dataset.url;
+                resizingEl.innerHTML = ''; // Dòng này xóa mất resize-handle
+
+                // Vẽ lại QR code
+                new QRCode(resizingEl, {
+                    text: url,
+                    width: resizingEl.offsetWidth - 20,
+                    height: resizingEl.offsetHeight - 20,
+                });
+
+                // Xóa canvas thừa
+                const canvasEl = resizingEl.querySelector('canvas');
+                if (canvasEl) canvasEl.remove();
+
+                // === THÊM DÒNG NÀY ĐỂ TẠO LẠI RESIZE HANDLE ĐÃ MẤT ===
+                createResizeHandleFor(resizingEl);
+                // ======================================================
+            }
             resizingEl = null;
             document.body.style.userSelect = "";
         }
@@ -323,7 +385,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.addEventListener("mousedown", (e) => {
-        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button, .card");
+        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button, .card, .draggable-qrcode");
         const insideToolbar = !!e.target.closest("#floatingToolbar, #cardToolbar");
         if (!insideElement && !insideToolbar) {
             hideToolbars();
@@ -385,17 +447,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function initButtonElement(buttonEl, id, pageId, keepPosition = false) {
+    function initButtonElement(buttonEl, id, pageId, keepPosition = false, linkUrl = '') {
         buttonEl.classList.add("draggable-button");
         buttonEl.contentEditable = "false";
         buttonEl.style.padding = "8px 16px";
         buttonEl.style.border = "1px solid #ccc";
         buttonEl.style.borderRadius = "4px";
         buttonEl.style.backgroundColor = "#ffffff";
+        if (linkUrl) {
+            buttonEl.dataset.link = linkUrl;
+        }
         initCanvasElement(buttonEl, id, pageId, keepPosition);
         buttonEl.addEventListener("blur", () => {
             buttonEl.contentEditable = "false";
-            const input = buttonsList.querySelector(`input[data-id="${id}"]`);
+            const input = buttonsList.querySelector(`input.name[data-id="${id}"]`);
             if (input) input.value = buttonEl.innerText;
             if (selectedElement === buttonEl) selectElement(buttonEl);
         });
@@ -413,10 +478,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return textEl;
     }
 
-    function addButtonElement(text, id, pageId) {
+    function addButtonElement(text, id, pageId, linkUrl = '') {
         const buttonEl = document.createElement("button");
         buttonEl.innerText = text;
-        initButtonElement(buttonEl, id, pageId);
+        initButtonElement(buttonEl, id, pageId, false, linkUrl);
         return buttonEl;
     }
 
@@ -432,6 +497,27 @@ document.addEventListener("DOMContentLoaded", () => {
         initCanvasElement(imgEl, id, pageId);
         addImageToSidebar(fileName, imageUrl, id, pageId);
         return imgEl;
+    }
+
+    function addQrCodeElement(url, id, pageId) {
+        const qrEl = document.createElement("div");
+        qrEl.className = "draggable-qrcode";
+        qrEl.dataset.url = url;
+        qrEl.style.width = "170px";
+        qrEl.style.height = "170px";
+
+        new QRCode(qrEl, {
+            text: url,
+            width: 150,
+            height: 150,
+        });
+        const canvasEl = qrEl.querySelector('canvas');
+        if (canvasEl) {
+            canvasEl.remove();
+        }
+        initCanvasElement(qrEl, id, pageId);
+        addQrCodeToSidebar(id, pageId);
+        return qrEl;
     }
 
     function addTextToSidebar(text, id, pageId) {
@@ -452,20 +538,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function addButtonToSidebar(text, id, pageId, bgColor = "#ffffff") {
+    function addButtonToSidebar(text, id, pageId, bgColor = "#ffffff", linkUrl = '') {
         const buttonItem = document.createElement("div");
         buttonItem.className = "element button-item";
         buttonItem.dataset.id = id;
         buttonItem.dataset.pageId = pageId;
         buttonItem.innerHTML = `
-            <input class="name" value="${text}" data-id="${id}" />
-            <input type="color" style="margin-right: 10px;" class="button-color-picker" value="${bgColor}" data-id="${id}" />
-            <div class="fas fa-trash-alt"></div>
+            <div style="width:100%; display: flex; flex-direction: column; gap: 4px;">
+                <input class="name" value="${text}" data-id="${id}" placeholder="Button Text"/>
+                <input class="link-input" value="${linkUrl}" data-id="${id}" placeholder="https://example.com/rsvp-link"/>
+            </div>
+            <div style="display:flex; flex-direction: column; align-items: center; gap: 8px;">
+                <input type="color" class="button-color-picker" value="${bgColor}" data-id="${id}" />
+                <div class="fas fa-trash-alt" style="cursor: pointer;"></div>
+            </div>
         `;
         buttonsList.appendChild(buttonItem);
+
         buttonItem.querySelector(".name").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
             if (buttonEl) buttonEl.innerText = e.target.value;
+        });
+        buttonItem.querySelector(".link-input").addEventListener("input", (e) => {
+            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            if (buttonEl) buttonEl.dataset.link = e.target.value;
         });
         buttonItem.querySelector(".button-color-picker").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
@@ -473,13 +569,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         buttonItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
             buttonItem.remove();
-            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
+            const buttonEl = canvas.querySelector(`[data-id="${id}"]`);
             if (buttonEl) buttonEl.remove();
             if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
         });
-        buttonItem.addEventListener("click", () => {
-            const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
-            if (buttonEl) selectElement(buttonEl);
+        buttonItem.addEventListener("click", (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                const buttonEl = canvas.querySelector(`[data-id="${id}"]`);
+                if (buttonEl) selectElement(buttonEl);
+            }
+        });
+    }
+
+    function addQrCodeToSidebar(id, pageId) {
+        const qrItem = document.createElement("div");
+        qrItem.className = "element button-item";
+        qrItem.dataset.id = id;
+        qrItem.dataset.pageId = pageId;
+        qrItem.innerHTML = `
+            <span class="name" data-id="${id}" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-qrcode"></i> QR Code
+            </span>
+            <div class="fas fa-trash-alt" style="cursor: pointer;"></div>
+        `;
+        buttonsList.appendChild(qrItem);
+        qrItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+            qrItem.remove();
+            const qrEl = canvas.querySelector(`.draggable-qrcode[data-id="${id}"]`);
+            if (qrEl) qrEl.remove();
+            if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
+        });
+        qrItem.addEventListener("click", () => {
+            const qrEl = canvas.querySelector(`.draggable-qrcode[data-id="${id}"]`);
+            if (qrEl) selectElement(qrEl);
         });
     }
 
@@ -496,12 +618,12 @@ document.addEventListener("DOMContentLoaded", () => {
         imageList.appendChild(imageItem);
         imageItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
             imageItem.remove();
-            const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
+            const imgEl = canvas.querySelector(`[data-id="${id}"]`);
             if (imgEl) imgEl.remove();
             if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
         });
         imageItem.addEventListener("click", () => {
-            const imgEl = canvas.querySelector(`.draggable-image[data-id="${id}"]`);
+            const imgEl = canvas.querySelector(`[data-id="${id}"]`);
             if (imgEl) selectElement(imgEl);
         });
     }
@@ -549,7 +671,7 @@ document.addEventListener("DOMContentLoaded", () => {
             elementsOnPage.forEach((el) => {
                 el.remove();
                 const sideTextItem = elementsList.querySelector(`input[data-id="${el.dataset.id}"]`);
-                if(sideTextItem) sideTextItem.parentElement.remove();
+                if (sideTextItem) sideTextItem.parentElement.remove();
             });
             if (activePageId === id) activePageId = null;
             hideToolbars();
@@ -639,18 +761,78 @@ document.addEventListener("DOMContentLoaded", () => {
             newPageEl.style.border = "2px solid white";
             activePageId = id;
             const newCard = canvas.querySelector(`.card[data-id="${id}"]`);
-            if(newCard) selectElement(newCard);
+            if (newCard) selectElement(newCard);
         }
     });
 
+    function showRsvpOptions() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        const modal = document.createElement('div');
+        modal.className = 'rsvp-modal-content';
+        modal.innerHTML = `
+            <h4>Add RSVP Element</h4>
+            <div class="rsvp-options">
+                <button id="addQrCodeBtn" class="rsvp-option-btn">
+                    <i class="fas fa-qrcode"></i>
+                    <span>QR Code</span>
+                </button>
+                <button id="addRsvpLinkBtn" class="rsvp-option-btn">
+                    <i class="fas fa-link"></i>
+                    <span>RSVP Link</span>
+                </button>
+            </div>
+            <button class="btn" id="cancelRsvpBtn">Cancel</button>
+        `;
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('visible'), 10);
+        const close = () => overlay.remove();
+
+        modal.querySelector('#addQrCodeBtn').addEventListener('click', () => {
+            const templateIdInput = document.getElementById("template_id_input");
+            if (!templateIdInput || !templateIdInput.value) {
+                alert("Lỗi: Không tìm thấy template ID để tạo link!");
+                close();
+                return;
+            }
+            const templateId = templateIdInput.value;
+            const id = `qrcode-${Date.now()}`;
+            const rsvpUrl = `http://localhost:8080/confirmWeeding?id=${templateId}`;
+            const newEl = addQrCodeElement(rsvpUrl, id, activePageId);
+            selectElement(newEl);
+            close();
+        });
+
+        modal.querySelector('#addRsvpLinkBtn').addEventListener('click', () => {
+            const templateIdInput = document.getElementById("template_id_input");
+            if (!templateIdInput || !templateIdInput.value) {
+                alert("Lỗi: Không tìm thấy template ID để tạo link!");
+                close();
+                return;
+            }
+            const templateId = templateIdInput.value;
+            const rsvpUrl = `http://localhost:8080/confirmWeeding?id=${templateId}`;
+            const id = `button-${Date.now()}`;
+            const defaultText = "RSVP Here";
+            const defaultBgColor = "#88B04B";
+            addButtonToSidebar(defaultText, id, activePageId, defaultBgColor, rsvpUrl);
+            const newButtonEl = addButtonElement(defaultText, id, activePageId, rsvpUrl);
+            newButtonEl.style.backgroundColor = defaultBgColor;
+            newButtonEl.style.color = "white";
+            newButtonEl.style.border = "none";
+            selectElement(newButtonEl);
+            close();
+        });
+        modal.querySelector('#cancelRsvpBtn').addEventListener('click', close);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+    }
+
     confirmBtn.addEventListener("click", () => {
         if (!activePageId) { alert("Please select a page first!"); return; }
-        const id = `button-${Date.now()}`;
-        const defaultText = "Confirm";
-        const defaultBgColor = "#ffffff";
-        addButtonToSidebar(defaultText, id, activePageId, defaultBgColor);
-        const newButtonEl = addButtonElement(defaultText, id, activePageId);
-        selectElement(newButtonEl);
+        showRsvpOptions();
     });
 
     textBtn.addEventListener("click", () => {
@@ -827,6 +1009,109 @@ document.addEventListener("DOMContentLoaded", () => {
     if (defaultColorPreset) {
         defaultColorPreset.classList.add("selected");
     }
+// --- LOGIC LƯU DESIGN ---
+    const saveDesignBtn = document.getElementById("saveDesignBtn");
+    if (saveDesignBtn) {
+        saveDesignBtn.addEventListener("click", async () => {
+            const templateIdInput = document.getElementById("template_id_input");
+            const canvasElement = document.querySelector(".canvas");
 
+            if (!canvasElement) {
+                alert("Lỗi: Không tìm thấy khu vực thiết kế.");
+                return;
+            }
+
+            const canvasClone = canvasElement.cloneNode(true);
+
+            canvasClone.querySelectorAll(".selected-element-outline, .selected-image-outline, .resize-handle").forEach(el => {
+                el.remove();
+            });
+            const selectedCards = canvasClone.querySelectorAll(".card[style*='box-shadow']");
+            selectedCards.forEach(card => card.style.boxShadow = '');
+
+            const htmlCode = canvasClone.innerHTML;
+            const templateId = templateIdInput.value;
+
+            // === THAY ĐỔI Ở ĐÂY ===
+            let url = '/templates';
+            let method = 'POST';
+
+            if (templateId && templateId !== 'null' && templateId.length > 0) {
+                url = `/templates/${templateId}`;
+                method = 'PUT';
+            }
+            // =======================
+
+            console.log(`Đang gửi yêu cầu ${method} tới ${url}`);
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ htmlCode: htmlCode }),
+                });
+
+                if (response.ok) {
+                    const savedTemplate = await response.json();
+                    alert('Thiết kế đã được lưu thành công!');
+
+                    if (method === 'POST') {
+                        templateIdInput.value = savedTemplate.templateId;
+                        console.log(`Đã tạo mới và cập nhật template ID: ${savedTemplate.templateId}`);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    alert(`Lỗi khi lưu thiết kế: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Lỗi mạng hoặc lỗi khi gửi yêu cầu:', error);
+                alert('Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+            }
+        });
+    }
+    const generateLinkBtn = document.getElementById("generateLinkBtn");
+    const paymentConfirmOverlay = document.getElementById("paymentConfirmOverlay");
+    const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
+    const cancelPaymentBtn = document.getElementById("cancelPaymentBtn");
+
+    // Lấy lại shareLinkOverlay từ code cũ để có thể ẩn nó đi
+    if (generateLinkBtn) {
+        // 1. Khi bấm "Generate New Link"
+        generateLinkBtn.addEventListener("click", (event) => {
+            event.preventDefault(); // Chặn mọi hành vi mặc định
+
+            // Ẩn modal share và hiện modal yêu cầu thanh toán
+            if(shareLinkOverlay) shareLinkOverlay.classList.remove("visible");
+            if(paymentConfirmOverlay) paymentConfirmOverlay.classList.add("visible");
+        });
+    }
+
+    if (confirmPaymentBtn) {
+        // 2. Khi bấm "Accept & Pay"
+        confirmPaymentBtn.addEventListener("click", () => {
+            console.log("Redirecting to payment page...");
+            // Chuyển hướng sang trang thanh toán
+            window.location.href = "/payment";
+        });
+    }
+
+    // 3. Khi bấm "Cancel" hoặc bấm ra ngoài
+    function closePaymentModal() {
+        if(paymentConfirmOverlay) paymentConfirmOverlay.classList.remove("visible");
+    }
+
+    if (cancelPaymentBtn) {
+        cancelPaymentBtn.addEventListener("click", closePaymentModal);
+    }
+
+    if (paymentConfirmOverlay) {
+        paymentConfirmOverlay.addEventListener("click", (e) => {
+            if (e.target === paymentConfirmOverlay) {
+                closePaymentModal();
+            }
+        });
+    }
     initializeEditor();
 });

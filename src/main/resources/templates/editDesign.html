@@ -1,31 +1,207 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Wedding Invitation Designer - Demo</title>
+    <title>Wedding Invitation Designer</title>
 
-    <!-- Link CSS -->
     <link rel="stylesheet" href="/css/editDesign.css">
-
-    <!-- Font Awesome icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
+    <style>
+        /* Overlay for modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Share Link Modal Content */
+        .share-link-content {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        /* === CẬP NHẬT: Thêm payment-modal-content vào transition === */
+        .modal-overlay.visible .share-link-content,
+        .modal-overlay.visible .rsvp-modal-content,
+        .modal-overlay.visible .payment-modal-content {
+            transform: scale(1);
+        }
+
+        .share-link-content h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+
+        .share-link-content .share-input-group {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .share-link-content #shareLinkInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px 0 0 6px;
+            outline: none;
+        }
+
+        .share-link-content #copyLinkBtn {
+            padding: 0 15px;
+            border: 1px solid #ccc;
+            border-left: none;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .share-link-content .share-button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* RSVP & Payment Modal Content */
+        .rsvp-modal-content, .payment-modal-content {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px; /* Thêm max-width */
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .rsvp-modal-content h4, .payment-modal-content h4 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            color: #333;
+        }
+
+        /* === CSS MỚI: Cho nội dung payment modal === */
+        .payment-modal-content p {
+            font-size: 1rem;
+            color: #666;
+            margin: 15px 0 25px;
+            line-height: 1.5;
+        }
+
+        .payment-modal-content .payment-button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        /* ======================================= */
+
+
+        .rsvp-options {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .rsvp-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 120px;
+            height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            font-size: 1rem;
+        }
+
+        .rsvp-option-btn:hover {
+            background-color: #f0f0f0;
+            border-color: #4A90E2;
+        }
+
+        .rsvp-option-btn .fas {
+            font-size: 2rem;
+            color: #4A90E2;
+        }
+
+        /* QR Code on canvas */
+        .draggable-qrcode {
+            padding: 10px;
+            background: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.15);
+        }
+        .draggable-qrcode img, .draggable-qrcode canvas {
+            display: block !important;
+        }
+
+    </style>
 </head>
 <body>
 <header class="header">
     <div class="left-controls">
-        <button class="btn">Save Design</button>
+        <button class="btn" id="saveDesignBtn">Save Design</button>
         <button class="btn">Preview</button>
     </div>
-
     <div class="title">Wedding Invitation Designer</div>
-
     <div class="right-controls">
-        <button class="btn primary">Download</button>
+        <button id="shareBtn" class="btn primary">Share</button>
     </div>
 </header>
 
+<div id="shareLinkOverlay" class="modal-overlay">
+    <div class="share-link-content">
+        <h3>Share Your Design</h3>
+        <div class="share-input-group">
+            <input type="text" id="shareLinkInput" value="" readonly>
+            <button id="copyLinkBtn" title="Copy Link"><i class="fas fa-copy"></i></button>
+        </div>
+        <div class="share-button-group">
+            <button id="generateLinkBtn" class="btn primary">Generate New Link</button>
+            <button id="closeShareBtn" class="btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="paymentConfirmOverlay" class="modal-overlay">
+    <div class="payment-modal-content">
+        <h4>Yêu cầu thanh toán</h4>
+        <p>Để tạo liên kết chia sẻ công khai, bạn cần tiến hành thanh toán.</p>
+        <div class="payment-button-group">
+            <button id="cancelPaymentBtn" class="btn">Hủy bỏ</button>
+            <button id="confirmPaymentBtn" class="btn primary">Đồng ý & Thanh toán</button>
+        </div>
+    </div>
+</div>
+<input type="hidden" id="template_id_input" name="template_id_input" th:value="${template != null ? template.getTemplateId() : null}"/>
 <div class="main">
     <aside class="sidebar fade-in">
         <h2>Wedding Designer</h2>
@@ -77,8 +253,8 @@
                 </div>
             </div>
 
-            <button class="confirm-btn">+ Add Confirm Button</button>
-            <div class="quality">Buttons Elements</div>
+            <button class="confirm-btn">+ Add RSVP</button>
+            <div class="quality">RSVP Elements</div>
             <div class="buttons" id="buttonList">
 
             </div>
@@ -112,7 +288,7 @@
             <label for="uploadImageInput" class="add-btn">
                 + Upload Image
             </label>
-            <input type="file" id="uploadImageInput" accept="image/*,video/*" style="display: none;" />
+            <input type="file" id="uploadImageInput" accept="image/*" style="display: none;" />
             <div class="quality">Uploaded Images</div>
             <div class="elements" id="imageList"></div>
 
@@ -126,20 +302,68 @@
     <main class="canvas-wrap">
         <div class="canvas fade-in" role="region" aria-label="Design canvas"
              th:utext="${template == null
-            ? '<div class=&quot;card&quot; id=&quot;card&quot;>'+
-                 '<h3>Save the Date</h3> ' +
-                  '<h1>A &amp; B</h1>'  +
-                   '<p>June 30, 2025</p>' +
-               '</div>'
+            ? '&lt;div class=&quot;card&quot; id=&quot;card&quot;&gt;'+
+                 '&lt;h3&gt;Save the Date&lt;/h3&gt; ' +
+                  '&lt;h1&gt;A &amp; B&lt;/h1&gt;'  +
+                   '&lt;p&gt;June 30, 2025&lt;/p&gt;' +
+               '&lt;/div&gt;'
             : template.htmlCode}">
         </div>
     </main>
     <div></div>
 </div>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsjGimn5mrdv4SaHko6T4Ge8hChEHQQFc&libraries=places"></script>
 
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsjGimn5mrdv4SaHko6T4Ge8hChEHQQFc&libraries=places"></script>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 <script src="/js/editDesign.js"></script>
 <script src="/js/preview.js"></script>
 <script src="/js/addressMap.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const paymentConfirmOverlay = document.getElementById("paymentConfirmOverlay");
+        const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
+        const cancelPaymentBtn = document.getElementById("cancelPaymentBtn");
+        const shareLinkOverlay = document.getElementById("shareLinkOverlay");
+
+        if (generateLinkBtn) {
+            // 1. Khi bấm "Generate New Link"
+            generateLinkBtn.addEventListener("click", (event) => {
+                event.preventDefault(); // Chặn hành vi mặc định
+
+                // Ẩn modal share và hiện modal yêu cầu thanh toán
+                if(shareLinkOverlay) shareLinkOverlay.classList.remove("visible");
+                if(paymentConfirmOverlay) paymentConfirmOverlay.classList.add("visible");
+            });
+        }
+
+        if (confirmPaymentBtn) {
+            // 2. Khi bấm "Accept & Pay"
+            confirmPaymentBtn.addEventListener("click", () => {
+                console.log("Chuyển hướng đến trang thanh toán...");
+                // Chuyển hướng sang trang thanh toán
+                window.location.href = "/payment";
+            });
+        }
+
+        // 3. Hàm để đóng modal thanh toán
+        function closePaymentModal() {
+            if(paymentConfirmOverlay) paymentConfirmOverlay.classList.remove("visible");
+        }
+
+        if (cancelPaymentBtn) {
+            cancelPaymentBtn.addEventListener("click", closePaymentModal);
+        }
+
+        if (paymentConfirmOverlay) {
+            paymentConfirmOverlay.addEventListener("click", (e) => {
+                if (e.target === paymentConfirmOverlay) {
+                    closePaymentModal();
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
