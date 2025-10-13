@@ -319,51 +319,5 @@
 <script src="/js/preview.js"></script>
 <script src="/js/addressMap.js"></script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const generateLinkBtn = document.getElementById("generateLinkBtn");
-        const paymentConfirmOverlay = document.getElementById("paymentConfirmOverlay");
-        const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
-        const cancelPaymentBtn = document.getElementById("cancelPaymentBtn");
-        const shareLinkOverlay = document.getElementById("shareLinkOverlay");
-
-        if (generateLinkBtn) {
-            // 1. Khi bấm "Generate New Link"
-            generateLinkBtn.addEventListener("click", (event) => {
-                event.preventDefault(); // Chặn hành vi mặc định
-
-                // Ẩn modal share và hiện modal yêu cầu thanh toán
-                if(shareLinkOverlay) shareLinkOverlay.classList.remove("visible");
-                if(paymentConfirmOverlay) paymentConfirmOverlay.classList.add("visible");
-            });
-        }
-
-        if (confirmPaymentBtn) {
-            // 2. Khi bấm "Accept & Pay"
-            confirmPaymentBtn.addEventListener("click", () => {
-                console.log("Chuyển hướng đến trang thanh toán...");
-                // Chuyển hướng sang trang thanh toán
-                window.location.href = "/payment";
-            });
-        }
-
-        // 3. Hàm để đóng modal thanh toán
-        function closePaymentModal() {
-            if(paymentConfirmOverlay) paymentConfirmOverlay.classList.remove("visible");
-        }
-
-        if (cancelPaymentBtn) {
-            cancelPaymentBtn.addEventListener("click", closePaymentModal);
-        }
-
-        if (paymentConfirmOverlay) {
-            paymentConfirmOverlay.addEventListener("click", (e) => {
-                if (e.target === paymentConfirmOverlay) {
-                    closePaymentModal();
-                }
-            });
-        }
-    });
-</script>
 </body>
 </html>

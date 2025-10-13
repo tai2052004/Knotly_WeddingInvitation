@@ -792,7 +792,7 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.querySelector('#addQrCodeBtn').addEventListener('click', () => {
             const templateIdInput = document.getElementById("template_id_input");
             if (!templateIdInput || !templateIdInput.value) {
-                alert("Lỗi: Không tìm thấy template ID để tạo link!");
+                alert("Please save your design before create RSVP!");
                 close();
                 return;
             }
@@ -807,7 +807,7 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.querySelector('#addRsvpLinkBtn').addEventListener('click', () => {
             const templateIdInput = document.getElementById("template_id_input");
             if (!templateIdInput || !templateIdInput.value) {
-                alert("Lỗi: Không tìm thấy template ID để tạo link!");
+                alert("Please save your design before create RSVP!");
                 close();
                 return;
             }
@@ -1055,7 +1055,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (response.ok) {
                     const savedTemplate = await response.json();
-                    alert('Thiết kế đã được lưu thành công!');
+                    alert('Save design successfully!');
 
                     if (method === 'POST') {
                         templateIdInput.value = savedTemplate.templateId;
@@ -1078,13 +1078,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Lấy lại shareLinkOverlay từ code cũ để có thể ẩn nó đi
     if (generateLinkBtn) {
-        // 1. Khi bấm "Generate New Link"
+        // Khi bấm "Generate New Link"
         generateLinkBtn.addEventListener("click", (event) => {
-            event.preventDefault(); // Chặn mọi hành vi mặc định
+            event.preventDefault(); // Chặn hành vi mặc định của nút
 
-            // Ẩn modal share và hiện modal yêu cầu thanh toán
-            if(shareLinkOverlay) shareLinkOverlay.classList.remove("visible");
-            if(paymentConfirmOverlay) paymentConfirmOverlay.classList.add("visible");
+            // Lấy các phần tử cần thiết
+            const templateIdInput = document.getElementById("template_id_input");
+            const shareLinkInput = document.getElementById("shareLinkInput");
+
+            // 1. Kiểm tra xem thiết kế đã được lưu và có ID hay chưa
+            if (!templateIdInput || !templateIdInput.value) {
+                alert("Please save design before generate shareable link!");
+                return; // Dừng hàm nếu chưa có ID
+            }
+
+            // 2. Lấy ID từ input
+            const templateId = templateIdInput.value;
+
+            // 3. Tạo đường link chia sẻ
+            // (Bạn có thể thay đổi cấu trúc URL này để khớp với đường dẫn xem thiệp mời công khai trên backend)
+            // 4. Gán link vừa tạo vào ô input
+            shareLinkInput.value = `http://localhost:8080/Invitation?id=${templateId}`;
+
+            // (Tùy chọn) Thông báo cho người dùng biết link đã được tạo
+            alert("Đã tạo link chia sẻ thành công! Bạn có thể sao chép nó ngay bây giờ.");
         });
     }
 
@@ -1093,7 +1110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmPaymentBtn.addEventListener("click", () => {
             console.log("Redirecting to payment page...");
             // Chuyển hướng sang trang thanh toán
-            window.location.href = "/payment";
+            window.location.href = "/payOS";
         });
     }
 
