@@ -25,7 +25,9 @@ public class WebRouting {
     }
 
     @GetMapping("/editDesign")
-    public String editDesign( Model model) {
+    public String editDesign( Model model, HttpSession session) {
+        Users user = (Users) session.getAttribute("loggedInUser");
+        model.addAttribute("currentUser", user);
         return "editDesign";
     }
 
@@ -51,10 +53,10 @@ public class WebRouting {
         return "complete_template";
     }
     @GetMapping("/template")
-    public String template(Model model) {
-        Template template = new Template();
-        template = templateService.loadTemplate(4);
-        model.addAttribute("template", template);
+    public String template(@RequestParam("design_template_id") int designId, Model model, HttpSession session) {
+        model.addAttribute("designId", designId);
+        Users user = (Users) session.getAttribute("loggedInUser");
+        model.addAttribute("currentUser", user);
         return "editDesign";
     }
     @GetMapping("/forgotPassword")

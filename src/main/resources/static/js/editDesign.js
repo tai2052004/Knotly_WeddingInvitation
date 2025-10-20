@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const pagesList = document.getElementById("pagesList");
     const buttonsList = document.getElementById("buttonList");
     const canvas = document.querySelector(".canvas");
+    let designingIdInput = document.getElementById("design_template_input");
+
 
     if (canvas) {
         canvas.style.position = "relative";
@@ -790,13 +792,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const close = () => overlay.remove();
 
         modal.querySelector('#addQrCodeBtn').addEventListener('click', () => {
-            const templateIdInput = document.getElementById("template_id_input");
-            if (!templateIdInput || !templateIdInput.value) {
+            if (!designingIdInput || !designingIdInput.value) {
                 alert("Please save your design before create RSVP!");
                 close();
                 return;
             }
-            const templateId = templateIdInput.value;
+            const templateId = designingIdInput.value;
             const id = `qrcode-${Date.now()}`;
             const rsvpUrl = `http://localhost:8080/confirmWeeding?id=${templateId}`;
             const newEl = addQrCodeElement(rsvpUrl, id, activePageId);
@@ -805,13 +806,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         modal.querySelector('#addRsvpLinkBtn').addEventListener('click', () => {
-            const templateIdInput = document.getElementById("template_id_input");
-            if (!templateIdInput || !templateIdInput.value) {
+            if (!designingIdInput || !designingIdInput.value) {
                 alert("Please save your design before create RSVP!");
                 close();
                 return;
             }
-            const templateId = templateIdInput.value;
+            const templateId = designingIdInput.value;
             const rsvpUrl = `http://localhost:8080/confirmWeeding?id=${templateId}`;
             const id = `button-${Date.now()}`;
             const defaultText = "RSVP Here";
@@ -878,6 +878,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.target.value = '';
     });
 
+    // =========================================================================
+    // --- SỬA LỖI NỀN CỐ ĐỊNH (background-attachment: fixed) ---
+    // =========================================================================
+
     const bgColorPicker = document.getElementById("bgColorPicker");
     const colorPresets = document.querySelector(".color-presets");
     const uploadBgInput = document.getElementById("uploadBgInput");
@@ -893,6 +897,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bgColorPicker.addEventListener("input", (e) => {
             body.style.backgroundColor = e.target.value;
             body.style.backgroundImage = 'none';
+            body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 1
             deselectAllPresets();
         });
     }
@@ -903,6 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const color = e.target.style.backgroundColor;
                 body.style.backgroundColor = color;
                 body.style.backgroundImage = 'none';
+                body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 2
                 if (bgColorPicker) {
                     bgColorPicker.value = rgbToHex(color);
                 }
@@ -948,6 +954,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 body.style.backgroundSize = "cover";
                 body.style.backgroundPosition = "center";
                 body.style.backgroundRepeat = "no-repeat";
+                body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 3
             } else if (file.type.startsWith("video/")) {
                 const videoEl = document.createElement('video');
                 videoEl.src = url;
@@ -973,6 +980,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 if (file.type.startsWith("image/")) {
                     body.style.backgroundImage = `url(${url})`;
+                    // Đảm bảo các thuộc tính 'fixed' cũng được áp dụng lại khi click
+                    body.style.backgroundSize = "cover";
+                    body.style.backgroundPosition = "center";
+                    body.style.backgroundRepeat = "no-repeat";
+                    body.style.backgroundAttachment = 'fixed';
                 } else if (file.type.startsWith("video/")) {
                     const videoEl = document.createElement('video');
                     videoEl.src = url;
@@ -1009,112 +1021,134 @@ document.addEventListener("DOMContentLoaded", () => {
     if (defaultColorPreset) {
         defaultColorPreset.classList.add("selected");
     }
-// --- LOGIC LƯU DESIGN ---
+
+    // =========================================================================
+    // --- (HÀM LƯU ĐÃ CHÍNH XÁC - KHÔNG CẦN SỬA) ---
+    // =========================================================================
+
     const saveDesignBtn = document.getElementById("saveDesignBtn");
+
     if (saveDesignBtn) {
         saveDesignBtn.addEventListener("click", async () => {
+
+            // 1. Lấy value 3 thẻ input hidden
+            const userIdInput = document.getElementById("user_id_input");
+            const designingIdInput = document.getElementById("design_template_input");
             const templateIdInput = document.getElementById("template_id_input");
             const canvasElement = document.querySelector(".canvas");
+
+            const userId = userIdInput ? userIdInput.value : null;
+            const designingId = designingIdInput ? designingIdInput.value : null;
+            const templateId = templateIdInput ? templateIdInput.value : null;
+
+            // 2. Check nếu userId == null
+            if (!userId || userId === "") {
+                alert("Bạn chưa đăng nhập. Vui lòng đăng nhập để lưu thiết kế.");
+                window.location.href = "/login";
+                return;
+            }
 
             if (!canvasElement) {
                 alert("Lỗi: Không tìm thấy khu vực thiết kế.");
                 return;
             }
 
+            // A. Lấy HTML code đã dọn dẹp của canvas
             const canvasClone = canvasElement.cloneNode(true);
+            canvasClone.querySelectorAll(".selected-element-outline, .selected-image-outline, .resize-handle").forEach(el => el.remove());
+            canvasClone.querySelectorAll(".card[style*='box-shadow']").forEach(card => card.style.boxShadow = '');
+            const canvasHtml = canvasClone.innerHTML;
 
-            canvasClone.querySelectorAll(".selected-element-outline, .selected-image-outline, .resize-handle").forEach(el => {
-                el.remove();
-            });
-            const selectedCards = canvasClone.querySelectorAll(".card[style*='box-shadow']");
-            selectedCards.forEach(card => card.style.boxShadow = '');
+            // B. Lấy style của body (Đã bao gồm background-attachment: fixed)
+            const bodyStyle = document.body.style.cssText;
 
-            const htmlCode = canvasClone.innerHTML;
-            const templateId = templateIdInput.value;
+            // C. Lấy HTML của video background (nếu có)
+            const bodyVideo = document.body.querySelector('video[style*="z-index: -1"]');
+            const videoHtml = bodyVideo ? bodyVideo.outerHTML : '';
 
-            // === THAY ĐỔI Ở ĐÂY ===
-            let url = '/templates';
-            let method = 'POST';
 
-            if (templateId && templateId !== 'null' && templateId.length > 0) {
-                url = `/templates/${templateId}`;
-                method = 'PUT';
-            }
-            // =======================
+            // Dữ liệu gửi đi (Đã chính xác)
+            const draftData = {
+                htmlCode: canvasHtml,
+                bodyStyle: bodyStyle,
+                bodyVideo: videoHtml,
+                templateId: (templateId && !isNaN(parseInt(templateId)) && parseInt(templateId) > 0) ? parseInt(templateId) : null,
+                designingId: (designingId && !isNaN(parseInt(designingId)) && parseInt(designingId) > 0) ? parseInt(designingId) : null
+            };
 
-            console.log(`Đang gửi yêu cầu ${method} tới ${url}`);
+            const url = `/designing-templates`;
+            const method = 'PUT';
+
+            console.log(`Đang gửi yêu cầu ${method} tới ${url}`, draftData);
+            saveDesignBtn.textContent = "Saving...";
+            saveDesignBtn.disabled = true;
 
             try {
                 const response = await fetch(url, {
                     method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ htmlCode: htmlCode }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(draftData),
                 });
 
                 if (response.ok) {
-                    const savedTemplate = await response.json();
-                    alert('Save design successfully!');
+                    const savedDraft = await response.json();
+                    alert('Bản nháp đã được lưu thành công!');
 
-                    if (method === 'POST') {
-                        templateIdInput.value = savedTemplate.templateId;
-                        console.log(`Đã tạo mới và cập nhật template ID: ${savedTemplate.templateId}`);
+                    if (savedDraft && savedDraft.designingId) {
+                        designingIdInput.value = savedDraft.designingId;
+                        console.log("Đã cập nhật/xác nhận Designing ID: " + savedDraft.designingId);
                     }
-                } else {
+
+                } else if (response.status === 401) {
+                    alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                    window.location.href = "/login";
+                } else if (response.status === 403) {
+                    alert("Lỗi: Bạn không có quyền chỉnh sửa bản nháp này.");
+                }
+                else {
                     const errorText = await response.text();
-                    alert(`Lỗi khi lưu thiết kế: ${response.status} - ${errorText}`);
+                    alert(`Lỗi khi lưu bản nháp: ${response.status} - ${errorText}`);
                 }
             } catch (error) {
                 console.error('Lỗi mạng hoặc lỗi khi gửi yêu cầu:', error);
-                alert('Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+                alert('Đã xảy ra lỗi kết nối khi lưu bản nháp.');
+            } finally {
+                saveDesignBtn.textContent = "Save Design";
+                saveDesignBtn.disabled = false;
             }
         });
     }
+
     const generateLinkBtn = document.getElementById("generateLinkBtn");
     const paymentConfirmOverlay = document.getElementById("paymentConfirmOverlay");
     const confirmPaymentBtn = document.getElementById("confirmPaymentBtn");
     const cancelPaymentBtn = document.getElementById("cancelPaymentBtn");
 
-    // Lấy lại shareLinkOverlay từ code cũ để có thể ẩn nó đi
     if (generateLinkBtn) {
-        // Khi bấm "Generate New Link"
         generateLinkBtn.addEventListener("click", (event) => {
-            event.preventDefault(); // Chặn hành vi mặc định của nút
+            event.preventDefault();
 
-            // Lấy các phần tử cần thiết
             const templateIdInput = document.getElementById("template_id_input");
             const shareLinkInput = document.getElementById("shareLinkInput");
 
-            // 1. Kiểm tra xem thiết kế đã được lưu và có ID hay chưa
-            if (!templateIdInput || !templateIdInput.value) {
+            if (!designingIdInput || !designingIdInput.value) {
                 alert("Please save design before generate shareable link!");
-                return; // Dừng hàm nếu chưa có ID
+                return;
             }
 
-            // 2. Lấy ID từ input
-            const templateId = templateIdInput.value;
-
-            // 3. Tạo đường link chia sẻ
-            // (Bạn có thể thay đổi cấu trúc URL này để khớp với đường dẫn xem thiệp mời công khai trên backend)
-            // 4. Gán link vừa tạo vào ô input
+            const templateId = designingIdInput.value;
             shareLinkInput.value = `http://localhost:8080/Invitation?id=${templateId}`;
-
-            // (Tùy chọn) Thông báo cho người dùng biết link đã được tạo
             alert("Đã tạo link chia sẻ thành công! Bạn có thể sao chép nó ngay bây giờ.");
         });
     }
 
     if (confirmPaymentBtn) {
-        // 2. Khi bấm "Accept & Pay"
         confirmPaymentBtn.addEventListener("click", () => {
             console.log("Redirecting to payment page...");
-            // Chuyển hướng sang trang thanh toán
             window.location.href = "/payOS";
         });
     }
 
-    // 3. Khi bấm "Cancel" hoặc bấm ra ngoài
     function closePaymentModal() {
         if(paymentConfirmOverlay) paymentConfirmOverlay.classList.remove("visible");
     }

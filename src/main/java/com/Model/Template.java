@@ -39,7 +39,13 @@ public class Template {
         return templateId;
     }
 
+    public void setTemplateId(Long templateId) {
+        this.templateId = templateId;
+    }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public String getTemplateName() {
         return templateName;

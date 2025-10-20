@@ -165,7 +165,8 @@
 
     </style>
 </head>
-<body>
+<body th:styleappend="${bodyStyle != null ? bodyStyle : ''}">
+<div th:utext="${bodyVideo != null ? bodyVideo : ''}"></div>
 <header class="header">
     <div class="left-controls">
         <button class="btn" id="saveDesignBtn">Save Design</button>
@@ -202,6 +203,9 @@
     </div>
 </div>
 <input type="hidden" id="template_id_input" name="template_id_input" th:value="${template != null ? template.getTemplateId() : null}"/>
+<input type="hidden" id="user_id_input" name="user_id_input" th:value="${currentUser != null ? currentUser.getId() : null}"/>
+<input type="hidden" id="design_template_input" name="design_template_input" th:value="${designId != null ? designId : null}"/>
+
 <div class="main">
     <aside class="sidebar fade-in">
         <h2>Wedding Designer</h2>

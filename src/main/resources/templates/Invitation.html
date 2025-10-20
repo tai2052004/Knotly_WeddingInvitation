@@ -1,35 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Invitation</title>
 
     <link rel="stylesheet" href="/css/editDesign.css">
-
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
-</head>
-<body>
-    <main class="canvas-wrap">
-        <div class="canvas fade-in" role="region" aria-label="Design canvas"
-             th:utext="${template == null
-            ? '<div class=&quot;card&quot; id=&quot;card&quot;>'+
-                 '<h3>Save the Date</h3> ' +
-                  '<h1>A &amp; B</h1>'  +
-                   '<p>June 30, 2025</p>' +
-               '</div>'
-            : template.htmlCode}">
-        </div>
-    </main>
+    <style>
+        html, body {
+            height: auto;
+            min-height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
 
+        /* Container chính: Dùng flex để căn giữa */
+        main.canvas-wrap {
+            display: flex !important; /* ⭐ Dùng flex */
+            flex-direction: column !important; /* ⭐ Xếp dọc */
+            align-items: center !important; /* ⭐ Căn giữa theo chiều ngang */
+            justify-content: flex-start !important; /* ⭐ Bắt đầu từ trên */
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 100vh;
+            padding: 40px 20px !important; /* Giữ padding trên/dưới */
+            margin: 0 !important;
+            box-sizing: border-box;
+        }
+
+        /* Khu vực chứa thiệp: Reset về block bình thường */
+        .canvas {
+            display: block !important; /* ⭐ Đổi về block */
+            width: auto !important; /* ⭐ Để chiều rộng tự nhiên theo card */
+            max-width: 100%; /* ⭐ Không vượt quá container */
+            margin: 0 !important; /* ⭐ Bỏ margin auto */
+            padding: 0 !important;
+            position: relative !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* Các thẻ card bên trong canvas */
+        .canvas .card {
+            margin-bottom: 0 !important; /* ⭐ Bỏ khoảng cách dưới */
+            position: relative !important;
+            /* Thêm viền nhẹ để dễ nhìn (tùy chọn) */
+            /* border: 1px solid #eee; */
+        }
+        /* Bỏ margin cho card cuối cùng (nếu cần) */
+        .canvas .card:last-child {
+            margin-bottom: 0 !important;
+        }
+
+
+        /* Đảm bảo các phần tử kéo thả hiển thị đúng */
+        .draggable-text,
+        .draggable-image,
+        .draggable-qrcode,
+        .draggable-button {
+            position: absolute !important;
+        }
+
+        /* Ẩn các yếu tố chỉ dành cho editor */
+        .selected-element-outline,
+        .selected-image-outline,
+        .resize-handle {
+            display: none !important;
+        }
+    </style>
+</head>
+<body th:styleappend="${bodyStyle != null ? bodyStyle : ''}">
+<div th:utext="${bodyVideo != null ? bodyVideo : ''}"></div>
+<main class="canvas-wrap">
+    <div class="canvas fade-in" role="region" aria-label="Design canvas"
+         th:utext="${templateHtmlCode == null
+            ? '<div class=&quot;card&quot; id=&quot;card&quot;><h3>Save the Date</h3><h1>A &amp; B</h1><p>June 30, 2025</p></div>'
+            : templateHtmlCode}">
+    </div>
+</main>
 
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBsjGimn5mrdv4SaHko6T4Ge8hChEHQQFc&libraries=places"></script>
-
 <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
 
-<script src="/js/editDesign.js"></script>
 <script src="/js/preview.js"></script>
 <script src="/js/addressMap.js"></script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const rsvpButtons = document.querySelectorAll('.draggable-button');
+        rsvpButtons.forEach(button => {
+            const linkUrl = button.dataset.link;
+            if (linkUrl) {
+                button.style.cursor = 'pointer';
+                button.addEventListener('click', () => {
+                    window.location.href = linkUrl;
+                });
+            }
+        });
+    });
+</script>
+
 </body>
 </html>
