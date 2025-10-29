@@ -163,6 +163,84 @@
             display: block !important;
         }
 
+        /* === CSS MỚI CHO TOOLBAR LỚN HƠN === */
+        .floating-toolbar {
+            padding: 8px !important;
+            gap: 8px !important;
+        }
+
+        .floating-toolbar .toolbar-row {
+            gap: 8px !important;
+        }
+
+        /* Nút (B, I, U, Align, AV, AB) */
+        .tb-btn {
+            height: 32px;
+            width: 32px;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            cursor: pointer;
+            padding: 0;
+        }
+        .tb-btn:hover {
+            background: #f4f4f4;
+        }
+        .tb-btn.active { /* Lớp active cho nút align */
+            background-color: #e0eaf7;
+            border-color: #4A90E2;
+        }
+
+        /* Input và Select */
+        .floating-toolbar select,
+        .floating-toolbar input[type="number"] {
+            height: 32px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 0 4px 0 8px;
+        }
+
+        .floating-toolbar input[type="number"] {
+            width: 60px !important;
+        }
+
+        .floating-toolbar input[type="color"] {
+            height: 32px;
+            width: 36px !important;
+            padding: 2px !important;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* CSS CHO POPUP MỚI (Letter Spacing, Curve) */
+        .toolbar-popup {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px 16px;
+            z-index: 3001; /* Phải cao hơn toolbar */
+            display: none; /* Mặc định ẩn */
+            width: 250px;
+        }
+        .toolbar-popup .popup-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .toolbar-popup .popup-slider {
+            width: 100%;
+            margin: 0;
+        }
+
     </style>
 </head>
 <body th:styleappend="${bodyStyle != null ? bodyStyle : ''}">
@@ -308,8 +386,8 @@
              th:utext="${template == null
             ? '&lt;div class=&quot;card&quot; id=&quot;card&quot;&gt;'+
                  '&lt;h3&gt;Save the Date&lt;/h3&gt; ' +
-                  '&lt;h1&gt;A &amp; B&lt;/h1&gt;'  +
-                   '&lt;p&gt;June 30, 2025&lt;/p&gt;' +
+                  '&lt;h1&gt;John &amp; Jane&lt;/h1&gt;'  +
+                   '&lt;p&gt;June 15, 2024&lt;/p&gt;' +
                '&lt;/div&gt;'
             : template.htmlCode}">
         </div>

@@ -9,6 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.querySelector(".canvas");
     let designingIdInput = document.getElementById("design_template_input");
 
+    // --- THÊM DÒNG NÀY ---
+    let textMeasurer = document.createElement("div");
+    textMeasurer.id = "textMeasurer";
+    textMeasurer.style.cssText = "position:absolute; left:-9999px; top:-9999px; visibility:hidden; width:auto; white-space:nowrap;";
+    document.body.appendChild(textMeasurer);
+    // --- HẾT PHẦN THÊM ---
+
 
     if (canvas) {
         canvas.style.position = "relative";
@@ -75,22 +82,63 @@ document.addEventListener("DOMContentLoaded", () => {
         toolbar.style.padding = "6px";
         toolbar.style.gap = "6px";
         toolbar.style.zIndex = "3000";
+        toolbar.style.flexDirection = "column";
         toolbar.innerHTML = `
-            <select id="tb-fontFamily" title="Font">
-                <option value="">(font)</option>
-                <option value="Muli, Arial, sans-serif">Muli</option>
-                <option value="Arial, Helvetica, sans-serif">Arial</option>
-                <option value="Times New Roman, Times, serif">Times</option>
-                <option value="Georgia, serif">Georgia</option>
-            </select>
-            <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
-            <input id="tb-color" type="color" title="Color" />
-            <button id="tb-bold" title="Bold"><b>B</b></button>
-            <button id="tb-italic" title="Italic"><i>I</i></button>
-            <button id="tb-underline" title="Underline"><u>U</u></button>
+            <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center;">
+                <select id="tb-fontFamily" title="Font">
+                    <option value="">(font)</option>
+                    <option value="Muli, Arial, sans-serif">Muli</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="Times New Roman, Times, serif">Times</option>
+                    <option value="Georgia, serif">Georgia</option>
+                </select>
+                <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
+                <input id="tb-color" type="color" title="Color" />
+                <button id="tb-bold" title="Bold" class="tb-btn"><b>B</b></button>
+                <button id="tb-italic" title="Italic" class="tb-btn"><i>I</i></button>
+                <button id="tb-underline" title="Underline" class="tb-btn"><u>U</u></button>
+            </div>
+            <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center; border-top: 1px solid #eee; padding-top: 6px;">
+                <button id="tb-align-left" title="Align Left" class="tb-btn"><i class="fas fa-align-left"></i></button>
+                <button id="tb-align-center" title="Align Center" class="tb-btn"><i class="fas fa-align-center"></i></button>
+                <button id="tb-align-right" title="Align Right" class="tb-btn"><i class="fas fa-align-right"></i></button>
+                <button id="tb-letter-spacing" title="Letter Spacing" class="tb-btn" style="font-weight: bold; font-size: 14px;">
+                    <i class="fas fa-arrows-left-right-to-line"></i>
+                </button>
+                <button id="tb-curve" title="Curved Text" class="tb-btn" style="font-weight: bold; font-size: 14px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16"><path d="M 2 10 Q 8 2 14 10" stroke="black" fill="none" stroke-width="2" stroke-linecap="round"></path></svg>
+                </button>
+            </div>
         `;
         document.body.appendChild(toolbar);
     }
+
+    // --- POPUP CHO LETTER SPACING ---
+    let letterSpacingPopup = document.getElementById("letterSpacingPopup");
+    if (!letterSpacingPopup) {
+        letterSpacingPopup = document.createElement("div");
+        letterSpacingPopup.id = "letterSpacingPopup";
+        letterSpacingPopup.className = "toolbar-popup";
+        letterSpacingPopup.innerHTML = `
+            <label class="popup-label">Letter spacing</label>
+            <input id="tb-letter-spacing-slider" type="range" min="-5" max="20" step="0.1" value="0" class="popup-slider" />
+        `;
+        document.body.appendChild(letterSpacingPopup);
+    }
+
+    // --- POPUP CHO CURVED TEXT ---
+    let curvePopup = document.getElementById("curvePopup");
+    if (!curvePopup) {
+        curvePopup = document.createElement("div");
+        curvePopup.id = "curvePopup";
+        curvePopup.className = "toolbar-popup";
+        curvePopup.innerHTML = `
+            <label class="popup-label">Curved text</label>
+            <input id="tb-curve-slider" type="range" min="-100" max="100" step="1" value="0" class="popup-slider" />
+        `;
+        document.body.appendChild(curvePopup);
+    }
+
 
     // --- Toolbar cho CARD ---
     let cardToolbar = document.getElementById("cardToolbar");
@@ -118,6 +166,37 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(cardToolbar);
     }
 
+    // --- Toolbar cho IMAGE/QR (Giữ nguyên) ---
+    let imageToolbar = document.getElementById("imageToolbar");
+    if (!imageToolbar) {
+        imageToolbar = document.createElement("div");
+        imageToolbar.id = "imageToolbar";
+        imageToolbar.className = "floating-toolbar";
+        imageToolbar.style.position = "absolute";
+        imageToolbar.style.display = "none";
+        imageToolbar.style.background = "white";
+        imageToolbar.style.border = "1px solid #ccc";
+        imageToolbar.style.borderRadius = "6px";
+        imageToolbar.style.boxShadow = "0 2px 6px rgba(0,0,0,0.12)";
+        imageToolbar.style.padding = "8px";
+        imageToolbar.style.display = "flex";
+        imageToolbar.style.gap = "8px";
+        imageToolbar.style.zIndex = "3000";
+        imageToolbar.innerHTML = `
+            <label style="font-size:13px;">Shape:</label>
+            <button id="itb-shape-rect" title="Rectangle Shape" class="tb-btn">
+                <i class="fas fa-square"></i>
+            </button>
+            <button id="itb-shape-circle" title="Circle Shape" class="tb-btn">
+                <i class="fas fa-circle"></i>
+            </button>
+            <label style="font-size:13px; margin-left: 5px;">Opacity:</label>
+            <input id="itb-opacity" type="range" min="0" max="100" value="100" style="width:100px;" />
+        `;
+        document.body.appendChild(imageToolbar);
+    }
+
+    // --- Lấy DOM elements cho các nút ---
     const tbFont = toolbar.querySelector("#tb-fontFamily");
     const tbSize = toolbar.querySelector("#tb-fontSize");
     const tbColor = toolbar.querySelector("#tb-color");
@@ -125,9 +204,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const tbItalic = toolbar.querySelector("#tb-italic");
     const tbUnderline = toolbar.querySelector("#tb-underline");
 
+    const tbAlignLeft = toolbar.querySelector("#tb-align-left");
+    const tbAlignCenter = toolbar.querySelector("#tb-align-center");
+    const tbAlignRight = toolbar.querySelector("#tb-align-right");
+    const tbLetterSpacing = toolbar.querySelector("#tb-letter-spacing");
+    const tbCurve = toolbar.querySelector("#tb-curve");
+
+    const tbLetterSpacingSlider = letterSpacingPopup.querySelector("#tb-letter-spacing-slider");
+    const tbCurveSlider = curvePopup.querySelector("#tb-curve-slider");
+
     const ctbWidth = cardToolbar.querySelector("#ctb-width");
     const ctbHeight = cardToolbar.querySelector("#ctb-height");
     const ctbColor = cardToolbar.querySelector("#ctb-color");
+
+    const itbShapeRect = imageToolbar.querySelector("#itb-shape-rect");
+    const itbShapeCircle = imageToolbar.querySelector("#itb-shape-circle");
+    const itbOpacity = imageToolbar.querySelector("#itb-opacity");
 
 
     function rgbToHex(rgb) {
@@ -137,15 +229,156 @@ document.addEventListener("DOMContentLoaded", () => {
         return "#" + [1, 2, 3].map(i => parseInt(m[i]).toString(16).padStart(2, "0")).join("");
     }
 
+    function hideToolPopups() {
+        if (letterSpacingPopup) letterSpacingPopup.style.display = "none";
+        if (curvePopup) curvePopup.style.display = "none";
+    }
+
+    // =================================================================
+    // === HÀM UỐN CONG CHỮ BẰNG SVG (CẬP NHẬT) ===
+    // =================================================================
+    function applyTextCurving(element, curveValue) {
+        curveValue = parseInt(curveValue);
+
+        let originalText = element.dataset.originalText;
+        if (!originalText && !element.querySelector('svg')) {
+            originalText = element.innerText;
+            element.dataset.originalText = originalText;
+        } else if (element.querySelector('svg textPath')) {
+            originalText = element.querySelector('svg textPath').textContent;
+        } else if (!originalText) {
+            originalText = element.innerText;
+            element.dataset.originalText = originalText;
+        }
+
+        // --- 1. NẾU SLIDER VỀ 0: TRẢ LẠI TEXT THƯỜNG ---
+        if (Math.abs(curveValue) < 5) {
+            if (element.dataset.originalText) {
+                const handle = element.querySelector('.resize-handle');
+                element.innerHTML = "";
+                element.innerText = originalText;
+                if (handle) element.appendChild(handle);
+                element.dataset.originalText = "";
+                element.style.height = 'auto';
+                element.style.color = tbColor.value;
+
+                // QUAN TRỌNG: Xóa width: auto để nó có thể wrap
+                if (element.style.whiteSpace === 'nowrap') {
+                    element.style.whiteSpace = 'normal';
+                }
+            }
+            return;
+        }
+
+        // --- 2. NẾU SLIDER != 0: TẠO SVG ĐỂ UỐN CONG ---
+
+        // =================================================================
+        // === ⚡ SỬA LỖI: THAY THẾ LOGIC ĐO WIDTH ===
+        // =================================================================
+        const cs = window.getComputedStyle(element);
+        const svgText = element.querySelector('svg text');
+
+        // --- 1. Đọc tất cả style ảnh hưởng đến width ---
+        const fontSize = svgText ? svgText.style.fontSize : cs.fontSize;
+        const color = svgText ? svgText.getAttribute('fill') : cs.color; // (color không ảnh hưởng width, nhưng giữ lại)
+        const fontFamily = svgText ? svgText.style.fontFamily : cs.fontFamily;
+        const letterSpacing = cs.letterSpacing; // Đây là style quan trọng
+        const fontWeight = cs.fontWeight;
+        const fontStyle = cs.fontStyle;
+
+        // --- 2. Dùng "thước đo" để tính width CHÍNH XÁC ---
+        textMeasurer.innerText = originalText;
+        textMeasurer.style.fontFamily = fontFamily;
+        textMeasurer.style.fontSize = fontSize;
+        textMeasurer.style.letterSpacing = letterSpacing;
+        textMeasurer.style.fontWeight = fontWeight;
+        textMeasurer.style.fontStyle = fontStyle;
+
+        // Đọc width thực sự từ "thước đo"
+        const measuredWidth = textMeasurer.offsetWidth;
+
+        // Sử dụng width đã đo, thay vì element.offsetWidth
+        const width = Math.max(50, measuredWidth);
+        // =================================================================
+        // === HẾT PHẦN SỬA LỖI ===
+        // =================================================================
+
+        const height = Math.abs(curveValue) + (parseInt(fontSize) || 16) + 20;
+        const midX = width / 2;
+
+        let midY, pathD;
+
+        if (curveValue > 0) {
+            midY = height - 10;
+            pathD = `M 0, ${midY} Q ${midX}, ${midY - curveValue}, ${width}, ${midY}`;
+        } else {
+            midY = 10 + parseInt(fontSize);
+            pathD = `M 0, ${midY} Q ${midX}, ${midY - curveValue}, ${width}, ${midY}`;
+        }
+
+        const pathId = 'curve-' + element.dataset.id;
+        const handle = element.querySelector('.resize-handle');
+
+        element.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="overflow: visible;">
+                <path id="${pathId}" d="${pathD}" fill="transparent" />
+                <text style="font-family: ${fontFamily}; font-size: ${fontSize}; letter-spacing: ${letterSpacing};" fill="${color}">
+                    <textPath href="#${pathId}" startOffset="50%" text-anchor="middle">${originalText}</textPath>
+                </text>
+            </svg>
+        `;
+
+        if (handle) element.appendChild(handle);
+        element.style.height = height + 'px';
+        element.style.color = 'transparent';
+    }
+
     function updateToolbarUI(el) {
         if (!el || (!el.classList.contains("draggable-text") && !el.classList.contains("draggable-button"))) return;
+
         const cs = window.getComputedStyle(el);
-        tbFont.value = cs.fontFamily || "";
-        tbSize.value = parseInt(cs.fontSize) || 16;
-        tbColor.value = rgbToHex(cs.color);
-        tbBold.style.background = (cs.fontWeight === "700" || cs.fontWeight === "bold") ? "#eee" : "transparent";
-        tbItalic.style.background = (cs.fontStyle === "italic") ? "#eee" : "transparent";
-        tbUnderline.style.background = ((cs.textDecorationLine || cs.textDecoration).indexOf("underline") !== -1) ? "#eee" : "transparent";
+        const svgText = el.querySelector('svg text');
+
+        let elFontFamily, elFontSize, elColor, elFontWeight, elFontStyle, elTextDecoration, elTextAlign;
+
+        if (svgText) {
+            const svgStyle = window.getComputedStyle(svgText);
+            elFontFamily = svgStyle.fontFamily;
+            elFontSize = parseInt(svgStyle.fontSize);
+            elColor = svgText.getAttribute('fill');
+            elFontWeight = cs.fontWeight;
+            elFontStyle = cs.fontStyle;
+            elTextDecoration = cs.textDecorationLine;
+            elTextAlign = 'center';
+        } else {
+            elFontFamily = cs.fontFamily;
+            elFontSize = parseInt(cs.fontSize);
+            elColor = cs.color;
+            elFontWeight = cs.fontWeight;
+            elFontStyle = cs.fontStyle;
+            elTextDecoration = cs.textDecorationLine || cs.textDecoration;
+            elTextAlign = cs.textAlign;
+        }
+
+        tbFont.value = elFontFamily || "";
+        tbSize.value = elFontSize || 16;
+        tbColor.value = rgbToHex(elColor);
+        tbBold.style.background = (elFontWeight === "700" || elFontWeight === "bold") ? "#eee" : "transparent";
+        tbItalic.style.background = (elFontStyle === "italic") ? "#eee" : "transparent";
+        tbUnderline.style.background = (elTextDecoration.indexOf("underline") !== -1) ? "#eee" : "transparent";
+
+        [tbAlignLeft, tbAlignCenter, tbAlignRight].forEach(btn => btn.classList.remove('active'));
+        if (elTextAlign === 'center') tbAlignCenter.classList.add('active');
+        else if (elTextAlign === 'right') tbAlignRight.classList.add('active');
+        else tbAlignLeft.classList.add('active');
+
+        // **CẬP NHẬT: Luôn đọc letterSpacing từ div cha**
+        const spacing = parseFloat(cs.letterSpacing);
+        tbLetterSpacingSlider.value = (isNaN(spacing) || spacing === 'normal') ? 0 : spacing;
+
+        if (!svgText) {
+            tbCurveSlider.value = 0;
+        }
     }
 
     function updateCardToolbarUI(el) {
@@ -156,15 +389,30 @@ document.addEventListener("DOMContentLoaded", () => {
         ctbColor.value = rgbToHex(cs.backgroundColor);
     }
 
-    function updateToolbarPosition(el) {
+    function positionPopup(popup, button) {
+        const tbRect = toolbar.getBoundingClientRect();
+        const btnRect = button.getBoundingClientRect();
+
+        popup.style.top = `${tbRect.bottom + window.scrollY + 5}px`;
+        let left = btnRect.left + window.scrollX + (btnRect.width / 2) - (popup.offsetWidth / 2);
+        popup.style.left = `${Math.max(5, left)}px`;
+    }
+
+    function updateToolbarPosition(el, keepPopups = false) {
         if (!el) return;
         let targetToolbar;
         if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
             targetToolbar = toolbar;
         } else if (el.classList.contains("card")) {
             targetToolbar = cardToolbar;
+        } else if (el.classList.contains("draggable-image") || el.classList.contains("draggable-qrcode")) {
+            targetToolbar = imageToolbar;
         } else {
             return;
+        }
+
+        if (!keepPopups) {
+            hideToolPopups();
         }
 
         const rect = el.getBoundingClientRect();
@@ -175,14 +423,11 @@ document.addEventListener("DOMContentLoaded", () => {
         targetToolbar.style.left = `${Math.max(6, left)}px`;
     }
 
-    // FIX: Sửa lỗi resize-handle biến mất khi click lần 2
     function selectElement(el) {
-        // Nếu click lại vào phần tử đang được chọn thì không làm gì cả
         if (selectedElement === el) {
             return;
         }
 
-        // Bỏ chọn phần tử cũ
         if (selectedElement) {
             selectedElement.classList.remove("selected-element-outline");
             selectedElement.classList.remove("selected-image-outline");
@@ -193,25 +438,28 @@ document.addEventListener("DOMContentLoaded", () => {
             if (oldHandle) oldHandle.style.display = "none";
         }
 
-        // Chọn phần tử mới
+        hideToolPopups();
+
         selectedElement = el;
         if (selectedElement) {
+            toolbar.style.display = "none";
+            cardToolbar.style.display = "none";
+            imageToolbar.style.display = "none";
+
             if (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")) {
                 selectedElement.classList.add("selected-element-outline");
                 const currentHandle = selectedElement.querySelector(".resize-handle");
                 if (currentHandle) currentHandle.style.display = "block";
-                cardToolbar.style.display = "none";
                 toolbar.style.display = "flex";
                 updateToolbarUI(selectedElement);
             } else if (selectedElement.classList.contains("draggable-image") || selectedElement.classList.contains("draggable-qrcode")) {
                 selectedElement.classList.add("selected-image-outline");
                 const currentHandle = selectedElement.querySelector(".resize-handle");
                 if (currentHandle) currentHandle.style.display = "block";
-                toolbar.style.display = "none";
-                cardToolbar.style.display = "none";
+                imageToolbar.style.display = "flex";
+                itbOpacity.value = (parseFloat(window.getComputedStyle(selectedElement).opacity) || 1) * 100;
             } else if (selectedElement.classList.contains("card")) {
                 selectedElement.style.boxShadow = "0 0 0 2px #4A90E2";
-                toolbar.style.display = "none";
                 cardToolbar.style.display = "flex";
                 updateCardToolbarUI(selectedElement);
             }
@@ -232,20 +480,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         toolbar.style.display = "none";
         cardToolbar.style.display = "none";
+        imageToolbar.style.display = "none";
+        hideToolPopups();
         selectedElement = null;
     }
 
+    // --- Listeners cho HÀNG 1 (Cập nhật cho SVG) ---
     tbFont.addEventListener("change", (e) => {
-        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
-            selectedElement.style.fontFamily = e.target.value || "";
+        if (selectedElement) {
+            const svgText = selectedElement.querySelector('svg text');
+            if (svgText) {
+                // Phải apply cho cả div cha (để lưu style) và svgText (để hiển thị)
+                selectedElement.style.fontFamily = e.target.value || "";
+                svgText.style.fontFamily = e.target.value || "";
+                applyTextCurving(selectedElement, tbCurveSlider.value);
+            } else {
+                selectedElement.style.fontFamily = e.target.value || "";
+            }
+        }
     });
     tbSize.addEventListener("input", (e) => {
-        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
-            selectedElement.style.fontSize = e.target.value + "px";
+        if (selectedElement) {
+            const svgText = selectedElement.querySelector('svg text');
+            if (svgText) {
+                selectedElement.style.fontSize = e.target.value + "px";
+                svgText.style.fontSize = e.target.value + "px";
+                applyTextCurving(selectedElement, tbCurveSlider.value);
+            } else {
+                selectedElement.style.fontSize = e.target.value + "px";
+            }
+        }
     });
     tbColor.addEventListener("input", (e) => {
-        if (selectedElement && (selectedElement.classList.contains("draggable-text") || selectedElement.classList.contains("draggable-button")))
-            selectedElement.style.color = e.target.value;
+        if (selectedElement) {
+            const svgText = selectedElement.querySelector('svg text');
+            if (svgText) {
+                selectedElement.style.color = e.target.value; // Lưu màu vào div
+                svgText.setAttribute('fill', e.target.value);
+            } else {
+                selectedElement.style.color = e.target.value;
+            }
+        }
     });
     tbBold.addEventListener("click", () => {
         if (!selectedElement || (!selectedElement.classList.contains("draggable-text") && !selectedElement.classList.contains("draggable-button"))) return;
@@ -266,6 +541,179 @@ document.addEventListener("DOMContentLoaded", () => {
         updateToolbarUI(selectedElement);
     });
 
+    // --- Listeners cho HÀNG 2 (Mới) ---
+
+    // Text Align (Chỉ hoạt động khi text không bị cong)
+    tbAlignLeft.addEventListener("click", () => {
+        if (selectedElement && !selectedElement.querySelector('svg')) {
+            selectedElement.style.textAlign = "left";
+            updateToolbarUI(selectedElement);
+        }
+    });
+    tbAlignCenter.addEventListener("click", () => {
+        if (selectedElement && !selectedElement.querySelector('svg')) {
+            selectedElement.style.textAlign = "center";
+            updateToolbarUI(selectedElement);
+        }
+    });
+    tbAlignRight.addEventListener("click", () => {
+        if (selectedElement && !selectedElement.querySelector('svg')) {
+            selectedElement.style.textAlign = "right";
+            updateToolbarUI(selectedElement);
+        }
+    });
+
+    tbLetterSpacing.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isVisible = letterSpacingPopup.style.display === 'block';
+        hideToolPopups();
+        if (!isVisible) {
+            letterSpacingPopup.style.display = 'block';
+            positionPopup(letterSpacingPopup, tbLetterSpacing);
+            updateToolbarUI(selectedElement);
+        }
+    });
+
+    // =================================================================
+    // === CẬP NHẬT: tbLetterSpacingSlider (ĐỂ TỰ ĐỘNG GIÃN BORDER) ===
+    // =================================================================
+    tbLetterSpacingSlider.addEventListener("input", (e) => {
+        if (selectedElement) {
+            const newSpacing = e.target.value + "px";
+
+            // 1. Luôn áp dụng spacing cho div cha
+            selectedElement.style.letterSpacing = newSpacing;
+
+            // 2. Giữ nguyên style.width = "auto"
+            selectedElement.style.width = "auto";
+
+            const svgText = selectedElement.querySelector('svg text');
+
+            if (svgText) {
+                // Case 2: Curved SVG Text
+                // Chỉ cần vẽ lại SVG. Nó sẽ đọc width 'auto' mới và letterSpacing mới
+                applyTextCurving(selectedElement, tbCurveSlider.value);
+            } else {
+                // Case 1: Standard Text
+                // Cần nowrap để text không bị ngắt dòng
+                selectedElement.style.whiteSpace = "nowrap";
+            }
+
+            // Cập nhật vị trí toolbar (vẫn giữ popup mở)
+            updateToolbarPosition(selectedElement, true);
+        }
+    });
+    // =================================================================
+
+
+    tbCurve.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isVisible = curvePopup.style.display === 'block';
+        hideToolPopups();
+        if (!isVisible) {
+            curvePopup.style.display = 'block';
+            positionPopup(curvePopup, tbCurve);
+        }
+    });
+    tbCurveSlider.addEventListener("input", (e) => {
+        if (selectedElement) {
+            // Khi kéo slider, giữ nguyên width auto
+            selectedElement.style.width = "auto";
+            applyTextCurving(selectedElement, e.target.value);
+            // Cập nhật vị trí (vẫn giữ popup mở)
+            updateToolbarPosition(selectedElement, true); // Cập nhật vị trí
+        }
+    });
+
+// javascript
+// Insert near your popup/slider listeners (replace the existing popup/slider block)
+    let ignoreDocumentHide = false;
+
+    [letterSpacingPopup, curvePopup].forEach(popup => {
+        if (!popup) return;
+        // Prevent outer handlers from hiding the popup when interacting inside it
+        popup.addEventListener("mousedown", e => e.stopPropagation());
+        popup.addEventListener("pointerdown", (e) => {
+            e.stopPropagation();
+            // mark to ignore the next document-level hide while user is interacting
+            ignoreDocumentHide = true;
+        });
+        // touch fallback
+        popup.addEventListener("touchstart", (e) => {
+            e.stopPropagation();
+            ignoreDocumentHide = true;
+        }, { passive: true });
+    });
+
+// Make range sliders robust to global mouse/pointer handlers
+    const letterSlider = letterSpacingPopup ? letterSpacingPopup.querySelector("#tb-letter-spacing-slider") : null;
+    const curveSlider = curvePopup ? curvePopup.querySelector("#tb-curve-slider") : null;
+
+    [letterSlider, curveSlider].forEach(slider => {
+        if (!slider) return;
+
+        slider.addEventListener("pointerdown", (e) => {
+            e.stopPropagation();
+            try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch (err) {}
+            document.body.style.userSelect = "none";
+            // prevent the global hide while dragging starts
+            ignoreDocumentHide = true;
+        });
+
+        slider.addEventListener("pointermove", (e) => {
+            e.stopPropagation();
+        });
+
+        slider.addEventListener("pointerup", (e) => {
+            e.stopPropagation();
+            try { e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId); } catch (err) {}
+            document.body.style.userSelect = "";
+            // allow global hide again after drag ends
+            ignoreDocumentHide = false;
+        });
+
+        slider.addEventListener("pointercancel", () => {
+            document.body.style.userSelect = "";
+            ignoreDocumentHide = false;
+        });
+
+        // Also prevent mousedown/bubbling for older browsers and mark ignore
+        slider.addEventListener("mousedown", (e) => {
+            e.stopPropagation();
+            ignoreDocumentHide = true;
+        });
+        slider.addEventListener("mouseup", () => {
+            ignoreDocumentHide = false;
+        });
+
+        // touch fallback clear
+        slider.addEventListener("touchend", () => {
+            document.body.style.userSelect = "";
+            ignoreDocumentHide = false;
+        });
+    });
+
+// Clear flag on any pointerup on document (safety)
+    document.addEventListener("pointerup", () => {
+        ignoreDocumentHide = false;
+    });
+
+// Replace the existing document mousedown listener with this (or modify it)
+    document.addEventListener("mousedown", (e) => {
+        // if we recently started interaction inside popup/slider, ignore this mousedown
+        if (ignoreDocumentHide) return;
+
+        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button, .card, .draggable-qrcode");
+        const insideToolbar = !!e.target.closest("#floatingToolbar, #cardToolbar, #imageToolbar, .toolbar-popup");
+        if (!insideElement && !insideToolbar) {
+            hideToolbars();
+        }
+    });
+
+
+
+
+    // --- Listeners cho Card Toolbar ---
     ctbWidth.addEventListener("input", (e) => {
         if (selectedElement && selectedElement.classList.contains("card")) {
             selectedElement.style.width = e.target.value + "px";
@@ -282,44 +730,88 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // --- Listeners cho Image Toolbar ---
+    itbShapeRect.addEventListener("click", () => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-image") || selectedElement.classList.contains("draggable-qrcode"))) {
+            selectedElement.style.borderRadius = "0";
+            selectedElement.style.clipPath = "none";
+        }
+    });
+    itbShapeCircle.addEventListener("click", () => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-image") || selectedElement.classList.contains("draggable-qrcode"))) {
+            selectedElement.style.borderRadius = "50%";
+            selectedElement.style.clipPath = "circle(50% at 50% 50%)";
+        }
+    });
+    itbOpacity.addEventListener("input", (e) => {
+        if (selectedElement && (selectedElement.classList.contains("draggable-image") || selectedElement.classList.contains("draggable-qrcode"))) {
+            selectedElement.style.opacity = e.target.value / 100;
+        }
+    });
+
+
+    // =================================================================
+    // === LOGIC RESIZE (Giữ nguyên) ===
+    // =================================================================
     let resizingEl = null; let resizeStartX = 0; let resizeStartY = 0; let resizeStartW = 0; let resizeStartH = 0;
+    let resizeStartFontSize = 16;
+
     document.addEventListener("mousemove", (e) => {
         if (resizingEl) {
             const dx = e.clientX - resizeStartX;
             const dy = e.clientY - resizeStartY;
             const newW = Math.max(20, resizeStartW + dx);
             const newH = Math.max(20, resizeStartH + dy);
+
             resizingEl.style.width = newW + "px";
+
             if (resizingEl.classList.contains("draggable-qrcode")) {
-                resizingEl.style.height = newW + "px"; // Keep QR code square
+                resizingEl.style.height = newW + "px";
             } else {
                 resizingEl.style.height = newH + "px";
             }
+
+            if (resizingEl.classList.contains("draggable-text") || resizingEl.classList.contains("draggable-button")) {
+                const widthRatio = newW / resizeStartW;
+                const newFontSize = Math.max(8, resizeStartFontSize * widthRatio);
+
+                const svgText = resizingEl.querySelector('svg text');
+                if (svgText) {
+                    svgText.style.fontSize = newFontSize + 'px';
+                    // Quan trọng: Phải set lại style.fontSize cho cả div cha
+                    resizingEl.style.fontSize = newFontSize + 'px';
+                } else {
+                    resizingEl.style.fontSize = newFontSize + 'px';
+                }
+            }
+
             updateToolbarPosition(resizingEl);
         }
     });
     document.addEventListener("mouseup", () => {
         if (resizingEl) {
-            // Tìm đến đoạn logic dành cho draggable-qrcode
             if (resizingEl.classList.contains("draggable-qrcode")) {
                 const url = resizingEl.dataset.url;
-                resizingEl.innerHTML = ''; // Dòng này xóa mất resize-handle
-
-                // Vẽ lại QR code
+                resizingEl.innerHTML = '';
                 new QRCode(resizingEl, {
                     text: url,
                     width: resizingEl.offsetWidth - 20,
                     height: resizingEl.offsetHeight - 20,
                 });
-
-                // Xóa canvas thừa
                 const canvasEl = resizingEl.querySelector('canvas');
                 if (canvasEl) canvasEl.remove();
-
-                // === THÊM DÒNG NÀY ĐỂ TẠO LẠI RESIZE HANDLE ĐÃ MẤT ===
                 createResizeHandleFor(resizingEl);
-                // ======================================================
             }
+
+            if (resizingEl.classList.contains("draggable-text") || resizingEl.classList.contains("draggable-button")) {
+                updateToolbarUI(resizingEl);
+
+                const svg = resizingEl.querySelector('svg');
+                if (svg) {
+                    applyTextCurving(resizingEl, tbCurveSlider.value);
+                }
+            }
+
             resizingEl = null;
             document.body.style.userSelect = "";
         }
@@ -360,13 +852,28 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             selectElement(el);
         });
+
         el.addEventListener("dblclick", (e) => {
             e.stopPropagation();
             if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
+
+                if (el.querySelector('svg')) {
+                    const originalText = el.dataset.originalText || el.querySelector('svg textPath').textContent;
+                    const handle = el.querySelector('.resize-handle');
+                    el.innerHTML = "";
+                    el.innerText = originalText;
+                    if (handle) el.appendChild(handle);
+                    el.style.height = 'auto';
+                    el.style.color = tbColor.value;
+                    el.dataset.originalText = originalText;
+                }
+
                 el.contentEditable = "true";
                 el.focus();
                 toolbar.style.display = "none";
                 cardToolbar.style.display = "none";
+                imageToolbar.style.display = "none";
+                hideToolPopups();
             }
             selectElement(el);
         });
@@ -386,14 +893,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.addEventListener("mousedown", (e) => {
-        const insideElement = !!e.target.closest(".draggable-text, .draggable-image, .draggable-button, .card, .draggable-qrcode");
-        const insideToolbar = !!e.target.closest("#floatingToolbar, #cardToolbar");
-        if (!insideElement && !insideToolbar) {
-            hideToolbars();
-        }
-    });
-
     function createResizeHandleFor(el) {
         if (!el.style.width) el.style.width = Math.max(100, el.offsetWidth) + "px";
         if (!el.style.height) el.style.height = Math.max(50, el.offsetHeight) + "px";
@@ -404,6 +903,7 @@ document.addEventListener("DOMContentLoaded", () => {
             el.appendChild(resizeHandle);
         }
         resizeHandle.style.cssText = "position: absolute; bottom: 0px; right: 0px; width: 16px; height: 16px; background: linear-gradient(to top left, #fff 50%, #eee 50%); border: 1px solid #666; cursor: nwse-resize; z-index: 2001; display: none; opacity: 0.8; clip-path: polygon(0% 100%, 100% 100%, 100% 0%);";
+
         resizeHandle.addEventListener("mousedown", (e) => {
             if (e.button !== 0) return;
             e.stopPropagation();
@@ -412,6 +912,18 @@ document.addEventListener("DOMContentLoaded", () => {
             resizeStartY = e.clientY;
             resizeStartW = el.offsetWidth;
             resizeStartH = el.offsetHeight;
+
+            let currentFontSize = 16;
+            if (el.classList.contains("draggable-text") || el.classList.contains("draggable-button")) {
+                const svgText = el.querySelector('svg text');
+                if (svgText) {
+                    currentFontSize = parseInt(window.getComputedStyle(svgText).fontSize);
+                } else {
+                    currentFontSize = parseInt(window.getComputedStyle(el).fontSize);
+                }
+            }
+            resizeStartFontSize = currentFontSize || 16;
+
             document.body.style.userSelect = "none";
         });
     }
@@ -436,12 +948,20 @@ document.addEventListener("DOMContentLoaded", () => {
         textEl.classList.add("draggable-text");
         textEl.contentEditable = "false";
         initCanvasElement(textEl, id, pageId, keepPosition);
+
         textEl.addEventListener("blur", () => {
             textEl.contentEditable = "false";
             const input = elementsList.querySelector(`input[data-id="${id}"]`);
             if (input) input.value = textEl.innerText;
+
+            if (selectedElement === textEl && tbCurveSlider.value != 0) {
+                textEl.dataset.originalText = textEl.innerText;
+                applyTextCurving(textEl, tbCurveSlider.value);
+            }
+
             if (selectedElement === textEl) selectElement(textEl);
         });
+
         textEl.addEventListener("mousedown", (e) => {
             if (textEl.isContentEditable || textEl.contentEditable === "true") {
                 e.stopPropagation();
@@ -460,12 +980,20 @@ document.addEventListener("DOMContentLoaded", () => {
             buttonEl.dataset.link = linkUrl;
         }
         initCanvasElement(buttonEl, id, pageId, keepPosition);
+
         buttonEl.addEventListener("blur", () => {
             buttonEl.contentEditable = "false";
             const input = buttonsList.querySelector(`input.name[data-id="${id}"]`);
             if (input) input.value = buttonEl.innerText;
+
+            if (selectedElement === buttonEl && tbCurveSlider.value != 0) {
+                buttonEl.dataset.originalText = buttonEl.innerText;
+                applyTextCurving(buttonEl, tbCurveSlider.value);
+            }
+
             if (selectedElement === buttonEl) selectElement(buttonEl);
         });
+
         buttonEl.addEventListener("mousedown", (e) => {
             if (buttonEl.isContentEditable || buttonEl.contentEditable === "true") {
                 e.stopPropagation();
@@ -530,7 +1058,14 @@ document.addEventListener("DOMContentLoaded", () => {
         elementsList.appendChild(element);
         element.querySelector(".name").addEventListener("input", (e) => {
             const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
-            if (textEl) textEl.innerText = e.target.value;
+            if (textEl) {
+                textEl.innerText = e.target.value;
+                textEl.dataset.originalText = e.target.value;
+                const svgText = textEl.querySelector('svg textPath');
+                if (svgText) {
+                    svgText.textContent = e.target.value;
+                }
+            }
         });
         element.querySelector(".fa-trash-alt").addEventListener("click", () => {
             element.remove();
@@ -559,7 +1094,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         buttonItem.querySelector(".name").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
-            if (buttonEl) buttonEl.innerText = e.target.value;
+            if (buttonEl) {
+                buttonEl.innerText = e.target.value;
+                buttonEl.dataset.originalText = e.target.value;
+                const svgText = buttonEl.querySelector('svg textPath');
+                if (svgText) {
+                    svgText.textContent = e.target.value;
+                }
+            }
         });
         buttonItem.querySelector(".link-input").addEventListener("input", (e) => {
             const buttonEl = canvas.querySelector(`.draggable-button[data-id="${id}"]`);
@@ -879,7 +1421,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // =========================================================================
-    // --- SỬA LỖI NỀN CỐ ĐỊNH (background-attachment: fixed) ---
+    // --- BACKGROUND LOGIC (Giữ nguyên) ---
     // =========================================================================
 
     const bgColorPicker = document.getElementById("bgColorPicker");
@@ -897,7 +1439,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bgColorPicker.addEventListener("input", (e) => {
             body.style.backgroundColor = e.target.value;
             body.style.backgroundImage = 'none';
-            body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 1
+            body.style.backgroundAttachment = 'fixed';
             deselectAllPresets();
         });
     }
@@ -908,7 +1450,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const color = e.target.style.backgroundColor;
                 body.style.backgroundColor = color;
                 body.style.backgroundImage = 'none';
-                body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 2
+                body.style.backgroundAttachment = 'fixed';
                 if (bgColorPicker) {
                     bgColorPicker.value = rgbToHex(color);
                 }
@@ -954,7 +1496,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 body.style.backgroundSize = "cover";
                 body.style.backgroundPosition = "center";
                 body.style.backgroundRepeat = "no-repeat";
-                body.style.backgroundAttachment = 'fixed'; // <-- SỬA LỖI 3
+                body.style.backgroundAttachment = 'fixed';
             } else if (file.type.startsWith("video/")) {
                 const videoEl = document.createElement('video');
                 videoEl.src = url;
@@ -980,7 +1522,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 if (file.type.startsWith("image/")) {
                     body.style.backgroundImage = `url(${url})`;
-                    // Đảm bảo các thuộc tính 'fixed' cũng được áp dụng lại khi click
                     body.style.backgroundSize = "cover";
                     body.style.backgroundPosition = "center";
                     body.style.backgroundRepeat = "no-repeat";
@@ -1023,7 +1564,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // =========================================================================
-    // --- (HÀM LƯU ĐÃ CHÍNH XÁC - KHÔNG CẦN SỬA) ---
+    // --- SAVE & PAYMENT LOGIC (Giữ nguyên) ---
     // =========================================================================
 
     const saveDesignBtn = document.getElementById("saveDesignBtn");
@@ -1031,7 +1572,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (saveDesignBtn) {
         saveDesignBtn.addEventListener("click", async () => {
 
-            // 1. Lấy value 3 thẻ input hidden
             const userIdInput = document.getElementById("user_id_input");
             const designingIdInput = document.getElementById("design_template_input");
             const templateIdInput = document.getElementById("template_id_input");
@@ -1041,7 +1581,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const designingId = designingIdInput ? designingIdInput.value : null;
             const templateId = templateIdInput ? templateIdInput.value : null;
 
-            // 2. Check nếu userId == null
             if (!userId || userId === "") {
                 alert("Bạn chưa đăng nhập. Vui lòng đăng nhập để lưu thiết kế.");
                 window.location.href = "/login";
@@ -1053,21 +1592,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // A. Lấy HTML code đã dọn dẹp của canvas
             const canvasClone = canvasElement.cloneNode(true);
             canvasClone.querySelectorAll(".selected-element-outline, .selected-image-outline, .resize-handle").forEach(el => el.remove());
             canvasClone.querySelectorAll(".card[style*='box-shadow']").forEach(card => card.style.boxShadow = '');
             const canvasHtml = canvasClone.innerHTML;
-
-            // B. Lấy style của body (Đã bao gồm background-attachment: fixed)
             const bodyStyle = document.body.style.cssText;
-
-            // C. Lấy HTML của video background (nếu có)
             const bodyVideo = document.body.querySelector('video[style*="z-index: -1"]');
             const videoHtml = bodyVideo ? bodyVideo.outerHTML : '';
 
-
-            // Dữ liệu gửi đi (Đã chính xác)
             const draftData = {
                 htmlCode: canvasHtml,
                 bodyStyle: bodyStyle,
