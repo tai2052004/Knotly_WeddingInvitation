@@ -84,32 +84,51 @@ document.addEventListener("DOMContentLoaded", () => {
         toolbar.style.zIndex = "3000";
         toolbar.style.flexDirection = "column";
         toolbar.innerHTML = `
-            <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center;">
-                <select id="tb-fontFamily" title="Font">
-                    <option value="">(font)</option>
-                    <option value="Muli, Arial, sans-serif">Muli</option>
-                    <option value="Arial, Helvetica, sans-serif">Arial</option>
-                    <option value="Times New Roman, Times, serif">Times</option>
-                    <option value="Georgia, serif">Georgia</option>
-                </select>
-                <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
-                <input id="tb-color" type="color" title="Color" />
-                <button id="tb-bold" title="Bold" class="tb-btn"><b>B</b></button>
-                <button id="tb-italic" title="Italic" class="tb-btn"><i>I</i></button>
-                <button id="tb-underline" title="Underline" class="tb-btn"><u>U</u></button>
-            </div>
-            <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center; border-top: 1px solid #eee; padding-top: 6px;">
-                <button id="tb-align-left" title="Align Left" class="tb-btn"><i class="fas fa-align-left"></i></button>
-                <button id="tb-align-center" title="Align Center" class="tb-btn"><i class="fas fa-align-center"></i></button>
-                <button id="tb-align-right" title="Align Right" class="tb-btn"><i class="fas fa-align-right"></i></button>
-                <button id="tb-letter-spacing" title="Letter Spacing" class="tb-btn" style="font-weight: bold; font-size: 14px;">
-                    <i class="fas fa-arrows-left-right-to-line"></i>
-                </button>
-                <button id="tb-curve" title="Curved Text" class="tb-btn" style="font-weight: bold; font-size: 14px;">
-                    <svg width="16" height="16" viewBox="0 0 16 16"><path d="M 2 10 Q 8 2 14 10" stroke="black" fill="none" stroke-width="2" stroke-linecap="round"></path></svg>
-                </button>
-            </div>
-        `;
+        <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center;">
+            <select id="tb-fontFamily" title="Font">
+                <option value="">(font)</option>
+                <option value="Muli, Arial, sans-serif">Muli</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+                <option value="Times New Roman, Times, serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Verdana, Geneva, sans-serif">Verdana</option>
+                <option value="Courier New, Courier, monospace">Courier New</option>
+                <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
+                <option value="Trebuchet MS, Helvetica, sans-serif">Trebuchet MS</option>
+                <option value="Impact, Charcoal, sans-serif">Impact</option>
+                <option value="Comic Sans MS, cursive, sans-serif">Comic Sans MS</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="Open Sans, sans-serif">Open Sans</option>
+                <option value="Lato, sans-serif">Lato</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Oswald, sans-serif">Oswald</option>
+                <option value="Playfair Display, serif">Playfair Display</option>
+                <option value="Merriweather, serif">Merriweather</option>
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="Dancing Script, cursive">Dancing Script</option>
+                <option value="Pacifico, cursive">Pacifico</option>
+                <option value="Lobster, cursive">Lobster</option>
+                <option value="Noto Sans JP, sans-serif">Noto Sans JP</option>
+                <option value="Source Code Pro, monospace">Source Code Pro</option>
+            </select>
+            <input id="tb-fontSize" type="number" min="6" max="200" value="16" style="width:56px" title="Size" />
+            <input id="tb-color" type="color" title="Color" />
+            <button id="tb-bold" title="Bold" class="tb-btn"><b>B</b></button>
+            <button id="tb-italic" title="Italic" class="tb-btn"><i>I</i></button>
+            <button id="tb-underline" title="Underline" class="tb-btn"><u>U</u></button>
+        </div>
+        <div class="toolbar-row" style="display:flex; gap: 6px; align-items: center; border-top: 1px solid #eee; padding-top: 6px;">
+            <button id="tb-align-left" title="Align Left" class="tb-btn"><i class="fas fa-align-left"></i></button>
+            <button id="tb-align-center" title="Align Center" class="tb-btn"><i class="fas fa-align-center"></i></button>
+            <button id="tb-align-right" title="Align Right" class="tb-btn"><i class="fas fa-align-right"></i></button>
+            <button id="tb-letter-spacing" title="Letter Spacing" class="tb-btn" style="font-weight: bold; font-size: 14px;">
+                <i class="fas fa-arrows-left-right-to-line"></i>
+            </button>
+            <button id="tb-curve" title="Curved Text" class="tb-btn" style="font-weight: bold; font-size: 14px;">
+                <svg width="16" height="16" viewBox="0 0 16 16"><path d="M 2 10 Q 8 2 14 10" stroke="black" fill="none" stroke-width="2" stroke-linecap="round"></path></svg>
+            </button>
+        </div>
+    `;
         document.body.appendChild(toolbar);
     }
 
