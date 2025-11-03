@@ -10,6 +10,89 @@
     />
     <link rel="stylesheet" href="/css/globals.css" />
     <link rel="stylesheet" href="/css/landingPage.css" />
+    <style>
+        /* Main Header Container */
+        .new-header {
+            display: flex;
+            justify-content: space-between; /* This is the key for alignment */
+            align-items: center;
+            padding: 10px 40px; /* Vertical and horizontal padding */
+            background-color: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
+            position: fixed; /* Keep it at the top */
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000; /* Ensure it's on top of other content */
+            box-sizing: border-box;
+        }
+
+        /* Logo styling */
+        .logo-container img {
+            height: 50px; /* Adjust logo size */
+            width: auto;
+        }
+
+        /* Navigation Links */
+        .nav-links {
+            display: flex;
+            gap: 35px; /* Space between links */
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #374151;
+            font-family: "Inter", Helvetica, sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s ease-in-out;
+        }
+        .nav-links a:hover {
+            color: #71613c; /* Your brand's brown color */
+        }
+
+        /* Auth Section (Login/Logout) */
+        .auth-links .auth-group {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Space between items */
+        }
+        .auth-links .welcome-text {
+            color: #374151;
+            font-family: "Inter", Helvetica, sans-serif;
+            font-size: 15px;
+            white-space: nowrap; /* Prevents text from wrapping */
+        }
+
+        /* Button Styling */
+        .auth-links .auth-btn {
+            padding: 9px 20px;
+            border-radius: 9999px; /* Pill shape */
+            text-decoration: none;
+            font-family: "Inter", Helvetica, sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s ease-in-out;
+            display: inline-block;
+        }
+        /* Login button (light style) */
+        .auth-links .login-btn {
+            color: #374151;
+            background-color: transparent;
+            border-color: #e5e7eb;
+        }
+        .auth-links .login-btn:hover {
+            background-color: #f9fafb;
+        }
+        /* Sign Up / Logout button (dark style) */
+        .auth-links .signup-btn {
+            color: #ffffff;
+            background-color: #71613c; /* Your brand color */
+        }
+        .auth-links .signup-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
 <div class="element-light">
@@ -420,35 +503,34 @@
             </footer>
         </div>
     </div>
-    <header class="header" role="banner">
-        <img class="knotly" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/knotly-1.png" alt="Knotly logo" />
-        <nav class="nav" role="navigation" aria-label="Main navigation">
-            <a href="#features" class="link-4"><span class="text-wrapper-40">Features</span></a>
-            <a th:href="@{/design}" class="link-5"><span class="text-wrapper-41">Templates</span></a>
-            <a href="#how-it-works" class="link-6"><span class="text-wrapper-42">How It Works</span></a>
-            <a href="#pricing" class="link-7"><span class="text-wrapper-43">Pricing</span></a>
+    <header class="new-header" role="banner">
+
+        <div class="logo-container">
+            <img src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/knotly-1.png" alt="Knotly logo" />
+        </div>
+
+        <nav class="nav-links" role="navigation" aria-label="Main navigation">
+            <a href="#features">Features</a>
+            <a onclick="window.location.href='/design'">Templates</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#pricing">Pricing</a>
         </nav>
 
-        <div class="auth-section">
-        <!-- Show login/register if not logged in -->
-        <div th:if="${user == null}">
-        <a th:href="@{/login}" class="button-5" aria-label="Login to your account">
-            <img class="SVG-11" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/svg.svg" alt="" aria-hidden="true" />
-            <span class="text-wrapper-44">Login</span>
-        </a>
+        <div class="auth-links">
 
-        <button class="button-6" type="button" aria-label="Sign up for an account">
-            <img class="SVG-12" src="https://c.animaapp.com/mfj5tgtkVzxb6C/img/svg-3.svg" alt="" aria-hidden="true" />
-            <span class="text-wrapper-45" onclick="location.href='/register'" style="cusor:pointer;">Sign Up</span>
-        </button>
+            <div th:if="${user == null}" class="auth-group">
+                <a th:href="@{/login}" class="auth-btn login-btn" aria-label="Login">Login</a>
+                <a th:href="@{/register}" class="auth-btn signup-btn" aria-label="Sign up">Sign Up</a>
+            </div>
+
+            <div th:if="${user != null}" class="auth-group">
+                <span class="welcome-text">Welcome, <b th:text="${user.username}"></b>!</span>
+                <a th:href="@{/logout}" class="auth-btn signup-btn" aria-label="Logout">Logout</a>
+            </div>
         </div>
-        <!-- Show username + logout if logged in -->
-        <div th:if="${user != null}">
-            <span>Welcome, <b th:text="${user.username}"></b>!</span>
-            <a th:href="@{/logout}" class="button-5">Logout</a>
-        </div>
-        </div>
+
     </header>
+    
 </div>
 </body>
 </html>
