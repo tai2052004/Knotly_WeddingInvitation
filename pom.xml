@@ -70,10 +70,42 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+<!--        //pay os-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>vn.payos</groupId>
+            <artifactId>payos-java</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <!--        //pay os-->
+
+        <!--   login gg -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -111,6 +143,32 @@
                 </deployment>
             </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>com.microsoft.azure</groupId>
+                <artifactId>azure-webapp-maven-plugin</artifactId>
+                <version>2.12.0</version> <configuration>
+                <schemaVersion>v2</schemaVersion>
+
+                <resourceGroup>Knotly</resourceGroup>
+                <appName>Knotly</appName>
+                <pricingTier>B1</pricingTier> <region>East US</region> <runtime>
+                <os>Linux</os>
+                <javaVersion>Java 21</javaVersion> <webContainer>Java SE</webContainer>
+            </runtime>
+                <deployment>
+                    <resources>
+                        <resource>
+                            <directory>${project.build.directory}</directory>
+                            <includes>
+                                <include>*.jar</include>
+                            </includes>
+                        </resource>
+                    </resources>
+                </deployment>
+            </configuration>
+            </plugin>
+
         </plugins>
 
     </build>

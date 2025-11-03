@@ -8,7 +8,17 @@
     overflow-x: hidden
 }
 
+.auth-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
 
+.auth-user {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* space between Welcome and Logout */
+}
 .element-light .background {
     position: absolute;
     width: 100%;
@@ -2295,4 +2305,82 @@
     font-weight: 800; /* Rất đậm */
     color: #9C8966;
     display: block;
+}
+/* ================================================================== */
+/* ============= PASTE THIS AT THE END OF landingPage.css ============= */
+/* ================================================================== */
+
+/* 1. Force the main header into a Flexbox layout */
+.element-light .header {
+    display: flex !important;
+    justify-content: space-between !important; /* Logo | Nav | Auth */
+    align-items: center !important;
+    padding: 0 40px !important; /* Add some padding */
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+/* 2. Reset ALL direct children of the header to flow normally */
+.element-light .header > * {
+    position: static !important; /* CRITICAL: Removes all 'position: absolute' */
+    left: auto !important;
+    top: auto !important;
+    width: auto !important; /* Let content size them */
+}
+
+/* 3. Style the logo */
+.element-light .knotly {
+    height: 60px !important;
+    width: auto !important;
+}
+
+/* 4. Style the navigation area */
+.element-light .nav {
+    display: flex !important;
+    gap: 30px !important; /* Space between nav links */
+}
+
+/* 5. Reset the nav links themselves (they are also position: absolute) */
+.element-light .nav .link-4,
+.element-light .nav .link-5,
+.element-light .nav .link-6,
+.element-light .nav .link-7 {
+    position: static !important;
+}
+
+/* 6. Style the auth section (we'll target the original class) */
+.element-light .auth-section {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between items */
+    position: static !important; /* CRITICAL */
+}
+
+/* 7. Fix the auth buttons (which were position: absolute) */
+.element-light .button-5,
+.element-light .button-6 {
+    position: static !important; /* Override absolute */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    padding: 0 24px !important; /* Add horizontal padding */
+    height: 40px !important;
+}
+
+/* 8. Fix the text and icons INSIDE the buttons */
+.element-light .button-5 > *,
+.element-light .button-6 > * {
+    position: static !important; /* CRITICAL */
+    width: auto !important;
+    height: auto !important;
+    margin: 0 4px !important; /* Space between icon and text */
+}
+
+/* 9. Style our new 'Welcome' text */
+.welcome-text-custom {
+    color: #374151;
+    font-family: "Inter", Helvetica;
+    font-size: 15px;
+    white-space: nowrap; /* Stops text from wrapping */
 }
