@@ -1241,66 +1241,176 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+// Thay thế TOÀN BỘ hàm initializeEditor() cũ bằng hàm này
+
     function initializeEditor() {
-        card = document.getElementById("card");
-        if (!card) return;
+        card = document.getElementById("card"); // Vẫn thử tìm thẻ card default
+        const canvas = document.querySelector(".canvas");
+        if (!canvas) return;
 
-        card.style.position = "relative";
-        card.style.zIndex = "0";
+        // --- LOGIC MỚI: Xử lý template được tải từ th:utext ---
+        const loadedTexts = canvas.querySelectorAll(".draggable-text");
+        const loadedCards = canvas.querySelectorAll(".card");
 
-        card.addEventListener("click", (e) => {
-            if (e.target === card) {
-                e.stopPropagation();
-                selectElement(card);
+        // KIỂM TRA: Nếu có .draggable-text, HOẶC nhiều hơn 1 .card,
+        // HOẶC chỉ 1 .card nhưng không phải id="card" (tức là template đã lưu)
+        if (loadedTexts.length > 0 || loadedCards.length > 1 || (loadedCards.length === 1 && (!card || loadedCards[0].id !== 'card'))) {
+
+            console.log("Phát hiện template đã lưu. Đang khởi tạo lại...");
+
+            // Xóa các item sidebar mặc định vì chúng ta sẽ tự tạo
+            elementsList.innerHTML = '';
+            pagesList.innerHTML = '';
+            imageList.innerHTML = '';
+            // (buttonList thường rỗng)
+
+            let firstPageId = null;
+
+            // 1. Khởi tạo TRANG (CARD)
+            loadedCards.forEach((cardEl, index) => {
+                const id = cardEl.dataset.id || `loaded-page-${Date.now() + index}`;
+                cardEl.dataset.id = id;
+                cardEl.style.position = "relative";
+                cardEl.style.zIndex = "0";
+
+                cardEl.addEventListener("click", (e) => {
+                    if (e.target === cardEl) {
+                        e.stopPropagation();
+                        selectElement(cardEl);
+                    }
+                });
+
+                addPageToSidebar(`Page ${index + 1}`, id); // Tên trang có thể cần lấy từ data
+                if (index === 0) firstPageId = id;
+            });
+            pageCounter = loadedCards.length;
+
+            // 2. Khởi tạo TEXT
+            loadedTexts.forEach((textEl, index) => {
+                const id = textEl.dataset.id || `loaded-text-${Date.now() + index}`;
+                const pageId = textEl.dataset.pageId || firstPageId;
+                // Quan trọng: Gọi initTextElement với keepPosition = true
+                initTextElement(textEl, id, pageId, true);
+                addTextToSidebar(textEl.innerText, id, pageId);
+            });
+
+            // 3. Khởi tạo NÚT
+            canvas.querySelectorAll(".draggable-button").forEach((btnEl, index) => {
+                const id = btnEl.dataset.id || `loaded-btn-${Date.now() + index}`;
+                const pageId = btnEl.dataset.pageId || firstPageId;
+                const linkUrl = btnEl.dataset.link || '';
+                const bgColor = rgbToHex(btnEl.style.backgroundColor) || '#ffffff';
+                initButtonElement(btnEl, id, pageId, true, linkUrl);
+                addButtonToSidebar(btnEl.innerText, id, pageId, bgColor, linkUrl);
+            });
+
+            // 4. Khởi tạo ẢNH
+            canvas.querySelectorAll(".draggable-image").forEach((imgEl, index) => {
+                const id = imgEl.dataset.id || `loaded-img-${Date.now() + index}`;
+                const pageId = imgEl.dataset.pageId || firstPageId;
+                const imgUrlMatch = (imgEl.style.backgroundImage || '').match(/url\("?(.*?)"?\)/);
+                const imgUrl = imgUrlMatch ? imgUrlMatch[1] : '';
+
+                initCanvasElement(imgEl, id, pageId, true);
+                addImageToSidebar('Loaded Image', imgUrl, id, pageId);
+            });
+
+            // 5. Khởi tạo MÃ QR (Rất quan trọng)
+            // th:utext không thể tải <canvas> do JS tạo ra, ta phải TÁI TẠO nó
+            canvas.querySelectorAll(".draggable-qrcode").forEach((qrEl, index) => {
+                const id = qrEl.dataset.id || `loaded-qr-${Date.now() + index}`;
+                const pageId = qrEl.dataset.pageId || firstPageId;
+                const url = qrEl.dataset.url || '';
+
+                if(url) {
+                    qrEl.innerHTML = ''; // Xóa mọi thứ bên trong (ví dụ: img placeholder)
+                    new QRCode(qrEl, {
+                        text: url,
+                        width: qrEl.offsetWidth > 20 ? qrEl.offsetWidth - 20 : 150,
+                        height: qrEl.offsetHeight > 20 ? qrEl.offsetHeight - 20 : 150,
+                    });
+                    const canvasEl = qrEl.querySelector('canvas');
+                    if (canvasEl) canvasEl.remove(); // Xóa canvas thừa
+                }
+
+                initCanvasElement(qrEl, id, pageId, true);
+                addQrCodeToSidebar(id, pageId);
+            });
+
+            // Chọn trang đầu tiên làm trang hoạt động
+            if (firstPageId) {
+                const firstPageEl = pagesList.querySelector(`.page[data-id="${firstPageId}"]`);
+                if (firstPageEl) {
+                    firstPageEl.click();
+                } else {
+                    activePageId = firstPageId; // Fallback
+                }
             }
-        });
 
-        const initialSidebarTexts = elementsList.querySelectorAll(".element");
-        const initialCardTexts = card.querySelectorAll("h3, h1, p");
-        initialSidebarTexts.forEach((sidebarItem, index) => {
-            const textOnCard = initialCardTexts[index];
-            if (textOnCard) {
-                const id = `initial-text-${Date.now() + index}`;
-                const pageId = "initial-page-0";
-                sidebarItem.dataset.id = id;
-                sidebarItem.dataset.pageId = pageId;
-                const existingNameDiv = sidebarItem.querySelector(".name");
-                if (existingNameDiv) {
-                    const inputElement = document.createElement("input");
-                    inputElement.className = "name";
-                    inputElement.value = existingNameDiv.innerText;
-                    inputElement.dataset.id = id;
-                    sidebarItem.replaceChild(inputElement, existingNameDiv);
-                    inputElement.addEventListener("input", (e) => {
-                        const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
-                        if (textEl) textEl.innerText = e.target.value;
+        }
+            // --- LOGIC CŨ: Xử lý template MẶC ĐỊNH (h3, h1, p) ---
+        // Chỉ chạy nếu KHÔNG phát hiện template đã lưu
+        else if (card) {
+            console.log("Phát hiện template mặc định. Đang khởi tạo...");
+            card.style.position = "relative";
+            card.style.zIndex = "0";
+
+            card.addEventListener("click", (e) => {
+                if (e.target === card) {
+                    e.stopPropagation();
+                    selectElement(card);
+                }
+            });
+
+            const initialSidebarTexts = elementsList.querySelectorAll(".element");
+            const initialCardTexts = card.querySelectorAll("h3, h1, p"); // Chỉ chạy nếu là default
+
+            initialSidebarTexts.forEach((sidebarItem, index) => {
+                const textOnCard = initialCardTexts[index];
+                if (textOnCard) {
+                    const id = `initial-text-${Date.now() + index}`;
+                    const pageId = "initial-page-0";
+                    sidebarItem.dataset.id = id;
+                    sidebarItem.dataset.pageId = pageId;
+                    const existingNameDiv = sidebarItem.querySelector(".name");
+                    if (existingNameDiv) {
+                        const inputElement = document.createElement("input");
+                        inputElement.className = "name";
+                        inputElement.value = existingNameDiv.innerText;
+                        inputElement.dataset.id = id;
+                        sidebarItem.replaceChild(inputElement, existingNameDiv);
+                        inputElement.addEventListener("input", (e) => {
+                            const textEl = canvas.querySelector(`.draggable-text[data-id="${id}"]`);
+                            if (textEl) textEl.innerText = e.target.value;
+                        });
+                    }
+                    textOnCard.dataset.id = id;
+                    textOnCard.dataset.pageId = pageId;
+
+                    const cardRect = card.getBoundingClientRect();
+                    textOnCard.style.left = `${cardRect.width * 0.3}px`;
+                    textOnCard.style.top = `${cardRect.height * (0.2 + index * 0.2)}px`;
+
+                    initTextElement(textOnCard, id, pageId, true); // true = keepPosition
+                    sidebarItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
+                        sidebarItem.remove();
+                        textOnCard.remove();
+                        if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
                     });
                 }
-                textOnCard.dataset.id = id;
-                textOnCard.dataset.pageId = pageId;
+            });
 
-                const cardRect = card.getBoundingClientRect();
-                textOnCard.style.left = `${cardRect.width * 0.3}px`;
-                textOnCard.style.top = `${cardRect.height * (0.2 + index * 0.2)}px`;
-
-                initTextElement(textOnCard, id, pageId, true);
-                sidebarItem.querySelector(".fa-trash-alt").addEventListener("click", () => {
-                    sidebarItem.remove();
-                    textOnCard.remove();
-                    if (selectedElement && selectedElement.dataset.id === id) hideToolbars();
-                });
+            const initialPage = pagesList.querySelector(".page");
+            if (initialPage && card) {
+                const id = "initial-page-0";
+                initialPage.dataset.id = id;
+                card.dataset.id = id;
+                attachPageClick(initialPage, id);
+                activePageId = id;
+                initialPage.style.border = "2px solid white";
             }
-        });
-        const initialPage = pagesList.querySelector(".page");
-        if (initialPage && card) {
-            const id = "initial-page-0";
-            initialPage.dataset.id = id;
-            card.dataset.id = id;
-            attachPageClick(initialPage, id);
-            activePageId = id;
-            initialPage.style.border = "2px solid white";
+            pageCounter = pagesList.querySelectorAll(".page").length;
         }
-        pageCounter = pagesList.querySelectorAll(".page").length;
     }
 
     addTextBtn.addEventListener("click", () => {

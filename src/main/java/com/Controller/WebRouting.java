@@ -48,7 +48,7 @@ public class WebRouting {
         template = templateService.loadTemplate(templateId);
         System.out.println(template.getHtmlCode());
         model.addAttribute("template", template);
-        return "complete_template";
+        return "editDesign";
     }
     @GetMapping("/template")
     public String template(@RequestParam("design_template_id") int designId, Model model) {
